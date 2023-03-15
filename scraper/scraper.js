@@ -69,13 +69,30 @@ let saveData = async (fileName, data) => {
 
     await waitForResponse(id, (request, reply) => request["type"] == "downloader")
 }
-// let maxConcurrent = 5 
+
+let maxConcurrent = 3 // if we have too many going at once then printing takes longer than our hardcoded timout value
 
 let scrape = async (contents) => {
     // await saveData("errors.txt", JSON.stringify(failure))
     scraping = true
 
     for (let i = 0; i < contents.length; i++) {
+
+        // if more that the maxConcurrent are running at once then wait for one to finish before continuing
+        if (currentlyRunning >= maxConcurrent) {
+            console.log("Reached capacity! Waiting for one to finish...")
+
+            await new Promise((resolve, reject) => {
+                chrome.runtime.onMessage.addListener(function (request, sender, reply) {
+
+                    if (sender.tab && sender.tab.id && request["type"] == "error") {
+
+                        resolve()
+                        chrome.runtime.onMessage.removeListener(arguments.callee)
+                    }
+                })
+            })
+        }
 
         currentlyRunning++
 
