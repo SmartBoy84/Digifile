@@ -1,7 +1,17 @@
 let getWait = (d) => new Promise(resolve => setTimeout(resolve, d))
 
 let printFile = () => document.getElementById("print").click()
-let isLocked = () => document.querySelector("#passwordOverlay") && !document.querySelector("#passwordOverlay").getAttribute("class").includes("hidden")
+
+let getError = () => {
+
+    let pass = document.querySelector("#passwordOverlay")
+    if (pass && !pass.getAttribute("class").includes("hidden")) {
+        return "document locked"
+    }
+
+    let unsupported = document.querySelector(".rf-block")
+    if (unsupported && !unsupported.hidden) { return "document couldn't be loaded" }
+}
 
 
 function urlContentToDataUri(url) {
@@ -16,9 +26,10 @@ function urlContentToDataUri(url) {
 
 let saveFile = async (newPage, pathName) => {
 
-    if (isLocked()) {
-        console.log("File locked, aborting")
-        return "document locked"
+    let error = getError()
+    if (error) {
+        // console.log("File locked, aborting")
+        return error
     }
 
     let printService = document.querySelector("#printServiceOverlay")
@@ -84,8 +95,9 @@ window.addEventListener("DOMContentLoaded", async () => {
         let number = document.querySelector("#pageNumber")
         let loadingPages = document.querySelectorAll(".loadingIcon")
 
-        if (isLocked()) {
-            console.log("[warning] file locked")
+        let error = getError()
+        if (error) {
+            console.log("[warning] ", error)
             break
         }
 
