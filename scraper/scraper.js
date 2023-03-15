@@ -51,7 +51,7 @@ let saveData = async (fileName, data) => {
 
 let scrape = async (contents) => {
     let failure = {}
-    await saveData("errors.txt", JSON.stringify(failure))
+    // await saveData("errors.txt", JSON.stringify(failure))
 
     for (let i = 0; i < contents.length; i++) {
         if (cancel) {
@@ -72,7 +72,7 @@ let scrape = async (contents) => {
         console.log("moving on")
     }
 
-    await saveData(JSON.stringify(failure))
+    await saveData("errors.txt", JSON.stringify(failure))
     console.log("WE FINISHED BOI!")
 }
 
