@@ -97,7 +97,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
                 console.log(max, loadingPages.length)
 
-                await getWait(100) // really hacky solution, but what can I do?
+                await getWait(2000) // really hacky solution, but what can I do?
                 break
             }
         }
@@ -114,9 +114,10 @@ window.addEventListener("DOMContentLoaded", async () => {
     document.dispatchEvent(event)
 
     if (myType) {
-        let error = await saveFile(false, myType)
-        chrome.runtime.sendMessage({ "type": "error", "error": error ? error : "" })
 
+        let error = await saveFile(false, myType)
+
+        await chrome.runtime.sendMessage({ "type": "error", "name": myType, "error": error ? error : "" })
         window.close() // wicked
     }
 

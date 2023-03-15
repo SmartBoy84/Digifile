@@ -1,3 +1,7 @@
+let getWait = (d) => new Promise(resolve => setTimeout(resolve, d))
+
+let failure = {}
+let currentlyRunning = 0
 let scraping = false
 
 chrome.runtime.onMessage.addListener(async (request, sender, reply) => {
@@ -10,11 +14,26 @@ chrome.runtime.onMessage.addListener(async (request, sender, reply) => {
         chrome.runtime.reload()
     }
 
-    if (!sender.tab && !scraping) { // so that pages can load as per usual if not in scraping mode
-        reply("")
+    if (request["type"] == "error") { // must listen for reply here to avoid race condition
+        console.log("got reply from", request["name"])
+
+        if (request["type"] == "error" && request["error"] && request["error"].length > 0) {
+
+            failure[request["name"]] = request["error"]
+            console.log("error: ", request["error"])
+
+            reply({ "received": true })
+        }
+
+        currentlyRunning-- // finished!
+        return true
     }
 
-    return true
+    // if (!sender.tab && !scraping) { // so that pages can load as per usual if not in scraping mode
+    //     reply("")
+    // }
+
+    // return true
 })
 
 let waitForResponse = async (id, cFn) =>
@@ -29,16 +48,16 @@ let waitForResponse = async (id, cFn) =>
                     chrome.runtime.onMessage.removeListener(arguments.callee)
                 }
             }
-            return true
+            // return true
         })
     })
 
 let saveData = async (fileName, data) => {
 
     console.log("Saving data...")
-    id = (await chrome.tabs.create({ url: chrome.runtime.getURL("reporter/reporter.html") })).id
+    let id = (await chrome.tabs.create({ url: chrome.runtime.getURL("reporter/reporter.html") })).id
 
-    await waitForResponse((request, reply) => {
+    await waitForResponse(id, (request, reply) => {
         if (request["type"] == "downloader") {
             console.log("sending data to download...")
 
@@ -47,10 +66,9 @@ let saveData = async (fileName, data) => {
         }
         return false
     })
-}
 
-let failure = {}
-let currentlyRunning = 0
+    await waitForResponse(id, (request, reply) => request["type"] == "downloader")
+}
 // let maxConcurrent = 5 
 
 let scrape = async (contents) => {
@@ -79,26 +97,22 @@ let scrape = async (contents) => {
         console.log("and we're off!")
 
         // page has been loaded, wait for download to finish - tab should report any errors
-        waitForResponse(id, (req, reply) => { // if this works then maybe enforce an await if more than 5 tabs open at once?
-            if (req["type"] == "error" && req["error"] && req["error"].length > 0) {
-                failure[name] = req["error"]
-                currentlyRunning-- // finished!
-            }
-        }) // don't bother replying because this message doesn't expect it (receiving some other type  means some other routine is probably already running to handle it)
-
+        console.log("waiting for reply from", name)
         console.log("moving on")
     }
 
     console.log("waiting for all downloads to finish")
     while (true) {
         await getWait(50)
+        console.log(currentlyRunning)
         if (currentlyRunning == 0) {
             break
         }
     }
 
+    console.log(failure)
     await saveData("errors.txt", JSON.stringify(failure))
-    console.log("WE FINISHED BOI!")
 
+    console.log("WE FINISHED BOI!")
     chrome.runtime.reload() // much easier this way
 }
