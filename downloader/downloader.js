@@ -88,10 +88,16 @@ window.addEventListener("DOMContentLoaded", async () => {
         }
 
         if (number) {
-            let num = parseInt(number.getAttribute("max"))
-            if (num > 0 && loadingPages.length < num) // the second case ensures that at least one page has loaded! 
+
+            let max = parseInt(number.getAttribute("max"))
+            if (max > 0 && loadingPages.length < max - 1) { // the second case ensures that at least two pages have loaded! 
                 // The goal is to get as close as possible to when the printService is initialized, this still isn't sufficient
+
+                console.log(max, loadingPages.length)
+
+                await getWait(100) // really hacky solution, but what can I do?
                 break
+            }
         }
     }
 
@@ -100,8 +106,6 @@ window.addEventListener("DOMContentLoaded", async () => {
     let myType = await chrome.runtime.sendMessage({ "type": "scrape" })
 
     console.log("My type is:", myType ? "automatically scraped" : "normal page")
-
-    await getWait(2000) // really hacky solution, but what can I do?
 
     // prepare printing
     var event = new CustomEvent("beforeprint")
