@@ -42,7 +42,10 @@ let saveFile = async (newPage, pathName) => {
     printFile()
     await wait
 
-    let images = document.querySelector("#printContainer").querySelectorAll("img")
+    let collection = document.querySelector("#printContainer").cloneNode(true)
+    document.getElementById("printCancel").click()
+
+    let images = collection.querySelectorAll("img")
 
     if (images.length == 0) {
         return "empty document?"
@@ -54,7 +57,6 @@ let saveFile = async (newPage, pathName) => {
             await finalPDF.addPage() // so that a blank page isn't added at the end
         }
     }
-    document.getElementById("printCancel").click()
 
     if (newPage) {
         window.open(URL.createObjectURL(finalPDF.output("blob")), "_self")
