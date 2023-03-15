@@ -2,7 +2,6 @@ let getWait = (d) => new Promise(resolve => setTimeout(resolve, d))
 
 let printFile = () => document.getElementById("print").click()
 let isLocked = () => document.querySelector("#passwordOverlay") && !document.querySelector("#passwordOverlay").getAttribute("class").includes("hidden")
-let getName = () => document.querySelector(".viewer-file-name").innerHTML
 
 
 function urlContentToDataUri(url) {
@@ -24,23 +23,6 @@ let saveFile = async (newPage, pathName) => {
 
     let printService = document.querySelector("#printServiceOverlay")
     let finalPDF = new jsPDF()
-
-    // let adder = new MutationObserver(async (mutations) => {
-    //     for (var child of mutations) {
-    //         if (child.type === "childList" && child.addedNodes.length > 0) {
-    //             for (ele of child.addedNodes) {
-    //                 let image = ele.querySelector("img")
-    //                 if (ele) {
-    //                     finalPDF.addPage()
-    //                     console.log("added image!", data)
-
-    //                     finalPDF.addImage(image, 'JPEG', 0, 0, 210, 297)
-
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }).observe(printContainer, { childList: true, subtree: true })
 
     let wait = new Promise((resolve, reject) => {
         new MutationObserver((mutations, observer) => {
@@ -67,7 +49,7 @@ let saveFile = async (newPage, pathName) => {
     }
 
     for (let i = 0; i < images.length; i++) {
-        finalPDF.addImage(images[i], 'JPEG', 0, 0, 210, 297, '', 'FAST')
+        finalPDF.addImage(images[i], 'JPEG', 0, 0, 210, 297, '', 'FAST') // I have no clue what these magic values are - maybe I'll check them out?
         if (i < images.length - 1) {
             await finalPDF.addPage() // so that a blank page isn't added at the end
         }
@@ -93,9 +75,7 @@ let enableButton = (ele, cFn) => {
 }
 
 window.addEventListener("DOMContentLoaded", async () => {
-    /*
-    fix passwordOverlay case (there are likely going to be other cases, videos?!)
-    */
+
     while (true) {
         await getWait(50)
 
@@ -109,7 +89,8 @@ window.addEventListener("DOMContentLoaded", async () => {
 
         if (number) {
             let num = parseInt(number.getAttribute("max"))
-            if (num > 0 && loadingPages.length < num) // the last one ensures that atleast one page has loaded!
+            if (num > 0 && loadingPages.length < num) // the second case ensures that at least one page has loaded! 
+                // The goal is to get as close as possible to when the printService is initialized, this still isn't sufficient
                 break
         }
     }
@@ -118,7 +99,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     console.log("loaded, asking for my type")
     let myType = await chrome.runtime.sendMessage({ "type": "scrape" })
 
-    console.log("My type is:", myType ? myType : "normal page")
+    console.log("My type is:", myType ? "automatically scraped" : "normal page")
 
     await getWait(2000) // really hacky solution, but what can I do?
 
@@ -127,8 +108,6 @@ window.addEventListener("DOMContentLoaded", async () => {
     document.dispatchEvent(event)
 
     if (myType) {
-        console.log("automatic scraping in play!")
-
         let error = await saveFile(false, myType)
         chrome.runtime.sendMessage({ "type": "error", "error": error ? error : "" })
 

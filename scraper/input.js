@@ -1,15 +1,15 @@
 // download a list of any errors that were encountered
-chrome.runtime.onMessage.addListener(
-    function (request, sender, sendResponse) {
-        if (request["type"] == "download") {
-            var a = document.createElement("a");
-            var file = new Blob([request["data"]], { type: "text/plain" });
-            a.href = URL.createObjectURL(file);
-            a.download = request["filename"]
-            a.click();
-        }
-    }
-);
+// chrome.runtime.onMessage.addListener(
+//     function (request, sender, sendResponse) {
+//         if (request["type"] == "download") {
+//             var a = document.createElement("a");
+//             var file = new Blob([request["data"]], { type: "text/plain" });
+//             a.href = URL.createObjectURL(file);
+//             a.download = request["filename"]
+//             a.click();
+//         }
+//     }
+// );
 
 var input = document.createElement('input');
 input.type = 'file';
@@ -55,16 +55,15 @@ function processFile(file) {
         reader.onerror = () => {
             console.log("Failed")
             reject()
-        };
+        }
 
         reader.readAsBinaryString(file);
     })
 }
 
 input.onchange = async e => {
-
     let contents = await processFile(e.target.files[0])
+    
     alert("Scraping time!")
-
     chrome.runtime.sendMessage({ "type": "contents", "contents": contents })
 }
