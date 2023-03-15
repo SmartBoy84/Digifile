@@ -1,0 +1,30 @@
+{
+	"manifest_version": 3,
+	"name": "Digiscrape",
+	"version": "1.0.0",
+	"permissions": [
+		"nativeMessaging",
+		"tabs",
+		"webRequest",
+		"downloads"
+	],
+	"description": "attempt at breaking digify ig",
+	"content_scripts": [
+		{
+			"matches": [
+				"https://digify.com/*"
+			],
+			"js": [
+				"downloader/downloader.js",
+				"downloader/jspdf.min.js"
+			],
+			"run_at": "document_start"
+		}
+	],
+	"action": {
+		"default_popup": "scraper/input.html"
+	},
+	"background": {
+		"service_worker": "scraper/scraper.js"
+	}
+}
