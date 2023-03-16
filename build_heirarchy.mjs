@@ -7,6 +7,7 @@ try {
         throw ("Please supply path to fix up!")
     }
 
+    console.log("building heirarchy, please wait")
     let files = (await fs.readdir(process.argv[2])).filter(e => e.split(".").pop().toLowerCase() == "pdf").map(a => `${process.argv[2]}/${a}`)
     for (let file of files) {
 

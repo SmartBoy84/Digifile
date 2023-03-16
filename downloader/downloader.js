@@ -10,6 +10,9 @@ let getError = () => {
 
     let unsupported = document.querySelector(".rf-block")
     if (unsupported && !unsupported.hidden) { return "document couldn't be loaded" }
+
+    let excel = document.querySelector(".spread-sheet-content") // god damn excel documentsss!
+    if (excel && !excel.hidden) { return "excel documents not supported" }
 }
 
 
@@ -128,6 +131,12 @@ window.addEventListener("DOMContentLoaded", async () => {
     if (myType) {
 
         let error = await saveFile(false, myType)
+
+        if (error) { // if a file wasn't able to be scraped then save a dummy file so I know of it
+            let placeholderPDF = new jsPDF()
+            await placeholderPDF.text(error, 10, 10)
+            await placeholderPDF.save(myType)
+        }
 
         await chrome.runtime.sendMessage({ "type": "error", "name": myType, "error": error ? error : "" })
         window.close() // wicked

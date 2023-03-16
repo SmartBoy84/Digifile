@@ -14,5 +14,7 @@ Can take a very long time - ~10 sec per 15 pages
 After it finishes, run `build_heirarchy.mjs {download_dir}` to re-built the file heirarchy!
 
 Pressing the `pause` button generates a list of all the currently indexed files.  
-I've also provided a small `generate_progress.mjs` helper utility to construct this progress file in case the process was stopped some otherway.    
+I've also provided a small `generate_progress.mjs` helper utility to construct this progress file in case the process was stopped some otherway. 
+* This utility will generate the progress report regardless of whether `build_heirarchy.mjs` has been run on it or not - this allows you to regularly update your database  
+
 Supply `progress.txt` when scraping to continue from where the scraper left off 

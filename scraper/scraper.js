@@ -76,11 +76,10 @@ let saveData = async (fileName, data) => {
     await waitForResponse((request, reply) => request["type"] == "downloader", id)
 }
 
-let scrape = async (contents, history, maxTabs) => {
+let scrape = async (contents, history = [], maxTabs) => {
 
     // store states
     let failure = {}
-    let success = []
     let currentlyRunning = {}
 
     if (history) {
@@ -140,9 +139,9 @@ let scrape = async (contents, history, maxTabs) => {
 
                                 reply({ "received": true })
 
-                            } else {
-                                success.push(request["name"])
                             }
+
+                            history.push(request["name"]) // due to the nature of all this, I can't afford to save a dummy file and not count it as a success, ya know?
                         }
 
                         console.log("finished with ", request["name"])
@@ -171,7 +170,7 @@ let scrape = async (contents, history, maxTabs) => {
     console.log(failure)
 
     await Promise.allSettled([
-        saveData("progress.txt", JSON.stringify(success)),
+        saveData("progress.txt", JSON.stringify(history)),
         saveData("errors.txt", JSON.stringify(failure))
     ])
 
