@@ -3,7 +3,6 @@ import { promises as fs } from 'fs'
 import path, { dirname } from 'path'
 
 try {
-
     if (process.argv.length == 2) {
         throw ("Please supply path to fix up!")
     }

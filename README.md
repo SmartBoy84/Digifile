@@ -12,3 +12,7 @@ These can be found by clicking the three dots in the main page and selecting `ex
 Can take a very long time - ~10 sec per 15 pages  
 
 After it finishes, run `build_heirarchy.mjs {download_dir}` to re-built the file heirarchy!
+
+Pressing the `pause` button generates a list of all the currently indexed files.  
+I've also provided a small `generate_progress.mjs` helper utility to construct this progress file in case the process was stopped some otherway.    
+Supply `progress.txt` when scraping to continue from where the scraper left off 

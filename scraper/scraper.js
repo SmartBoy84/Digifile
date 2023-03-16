@@ -1,39 +1,60 @@
 let getWait = (d) => new Promise(resolve => setTimeout(resolve, d))
 
+// flags because extensisons' addListener() is pedantic
 let failure = {}
+let success = []
 let currentlyRunning = 0
 let scraping = false
+
+let alertBridge = (str) => chrome.runtime.sendMessage({ "type": "alert", "message": str })
 
 chrome.runtime.onMessage.addListener(async (request, sender, reply) => {
 
     if (request["type"] == "contents") {
+
+        let contents = request["contents"]
+        success = request["history"]
+
+        if (request["history"]) {
+            alertBridge("progress history provided, removing all pre-scraped files")
+
+            console.log("Entries before: ", contents.length)
+            contents = contents.filter(a => !success.some(b => {
+                // console.log(b[0], a)
+                if (a[0] == b) {
+                    console.log("Found")
+                }
+                return a[0] == b
+            }))
+            console.log("Entries after: ", contents.length)
+        }
+
         scrape(request["contents"])
     }
 
-    if (request["type"] == "cancel") {
-        chrome.runtime.reload()
+    if (request["type"] == "pause") {
+        scraping = false
+        alertBridge("Let me finish these final few documents, please - then I'll stop and generate a progress report :)")
     }
 
     if (request["type"] == "error") { // must listen for reply here to avoid race condition
         console.log("got reply from", request["name"])
 
-        if (request["type"] == "error" && request["error"] && request["error"].length > 0) {
+        if (request["type"] == "error") {
+            if (request["error"] && request["error"].length > 0) {
+                failure[request["name"]] = request["error"]
+                console.log("error: ", request["error"])
 
-            failure[request["name"]] = request["error"]
-            console.log("error: ", request["error"])
+                reply({ "received": true })
 
-            reply({ "received": true })
+            } else {
+                success.push(request["name"])
+            }
         }
 
         currentlyRunning-- // finished!
         return true
     }
-
-    // if (!sender.tab && !scraping) { // so that pages can load as per usual if not in scraping mode
-    //     reply("")
-    // }
-
-    // return true
 })
 
 let waitForResponse = async (id, cFn) =>
@@ -48,7 +69,6 @@ let waitForResponse = async (id, cFn) =>
                     chrome.runtime.onMessage.removeListener(arguments.callee)
                 }
             }
-            // return true
         })
     })
 
@@ -78,6 +98,10 @@ let scrape = async (contents) => {
 
     for (let i = 0; i < contents.length; i++) {
 
+        if (scraping == false) {
+            break
+        }
+
         // if more that the maxConcurrent are running at once then wait for one to finish before continuing
         if (currentlyRunning >= maxConcurrent) {
             console.log("Reached capacity! Waiting for one to finish...")
@@ -96,7 +120,7 @@ let scrape = async (contents) => {
 
         currentlyRunning++
 
-        let name = contents[i][0].replaceAll("\/", `$$$$`).replace(/\.[^/.]+$/, ".pdf")
+        let name = contents[i][0]
         let url = contents[i][1]
 
         console.log(name, url)
@@ -114,21 +138,23 @@ let scrape = async (contents) => {
         console.log("and we're off!")
 
         // page has been loaded, wait for download to finish - tab should report any errors
-        console.log("waiting for reply from", name)
-        console.log("moving on")
+        console.log("waiting for reply from", name) // this has been moved to the "master" listener
     }
 
     console.log("waiting for all downloads to finish")
     while (true) {
-        await getWait(50)
-        console.log(currentlyRunning)
+        await getWait(100) // eh, hacky is my middle name
         if (currentlyRunning == 0) {
             break
         }
     }
 
     console.log(failure)
-    await saveData("errors.txt", JSON.stringify(failure))
+    if (scraping) {
+        await saveData("errors.txt", JSON.stringify(failure))
+    } else {
+        await saveData("progress.txt", JSON.stringify(success)) // we don't need to track errors
+    }
 
     console.log("WE FINISHED BOI!")
     chrome.runtime.reload() // much easier this way

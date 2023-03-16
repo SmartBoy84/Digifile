@@ -1,32 +1,48 @@
-// download a list of any errors that were encountered
-// chrome.runtime.onMessage.addListener(
-//     function (request, sender, sendResponse) {
-//         if (request["type"] == "download") {
-//             var a = document.createElement("a");
-//             var file = new Blob([request["data"]], { type: "text/plain" });
-//             a.href = URL.createObjectURL(file);
-//             a.download = request["filename"]
-//             a.click();
-//         }
-//     }
-// );
-
-var input = document.createElement('input');
-input.type = 'file';
-
-let scraper = document.getElementById("scrape")
-scraper.style.backgroundColor = "green"
-
-let cancel = document.getElementById("cancel")
-
-scraper.addEventListener("click", () => {
-    input.click()
+chrome.runtime.onMessage.addListener(async (request, sender, reply) => {
+    if (request["type"] == "alert") {
+        alert(request["message"])
+    }
 })
 
-cancel.addEventListener("click", () => chrome.runtime.sendMessage({ "type": "cancel" }))
+var excelInput = document.getElementById('excel');
+excelInput.type = 'file';
+let excelContents = null
+excelInput.onchange = async e => excelContents = await processFile(e.target.files[0])
 
-function processFile(file) {
-    return new Promise((resolve, reject) => {
+var progressInput = document.getElementById('progress');
+progressInput.type = 'file';
+let progressContents = null
+progressInput.onchange = async e => progressContents = JSON.parse(await readAsString(e.target.files[0]))
+
+let scraper = document.getElementById("scrape")
+
+let start = document.getElementById("start")
+let pause = document.getElementById("pause")
+
+start.addEventListener("click", () => {
+    if (excelContents) {
+
+        alert("scraping time!")
+        chrome.runtime.sendMessage({ "type": "contents", "contents": excelContents, "history": progressContents })
+
+    } else {
+        alert("atleast provide the excel sheet!")
+    }
+})
+pause.addEventListener("click", () => chrome.runtime.sendMessage({ "type": "pause" }))
+
+let readAsString = (file) =>
+    new Promise((resolve, reject) => {
+
+        let reader = new FileReader();
+        reader.readAsText(file);
+
+        reader.onerror = () => reject()
+        reader.onload = (e) => resolve(reader.result)
+    })
+
+let processFile = (file) =>
+    new Promise((resolve, reject) => {
         let reader = new FileReader();
 
         reader.onload = (e) => {
@@ -43,7 +59,11 @@ function processFile(file) {
             var data = XLSX.utils.sheet_to_json(sheet, { header: true })
                 .map(a => Object.values(a))
                 .filter(a => a[1] == "File")
-                .map(a => [`${a[5]}/${a[0].trim()}`.replaceAll(/(?<=\/)(\d+\.?)+\s?/g, ""), a[3]])
+
+                .map(a => [`${a[5]}/${a[0].trim()}`
+                    .replaceAll(/(?<=\/)(\d+\.?)+\s?/g, "") // strip numbers before the name
+                    .replaceAll("\/", `$$$$`).replace(/\.[^/.]+$/, ".pdf") // replace '/' with '$$'
+                    , a[3]])
 
             if (data.length > 0) {
                 resolve(data)
@@ -59,11 +79,3 @@ function processFile(file) {
 
         reader.readAsBinaryString(file);
     })
-}
-
-input.onchange = async e => {
-    let contents = await processFile(e.target.files[0])
-    
-    alert("Scraping time!")
-    chrome.runtime.sendMessage({ "type": "contents", "contents": contents })
-}

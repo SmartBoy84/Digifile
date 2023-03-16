@@ -1,5 +1,4 @@
 let getWait = (d) => new Promise(resolve => setTimeout(resolve, d))
-
 let printFile = () => document.getElementById("print").click()
 
 let getError = () => {
