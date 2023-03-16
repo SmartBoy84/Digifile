@@ -1,9 +1,3 @@
-chrome.runtime.onMessage.addListener(async (request, sender, reply) => {
-    if (request["type"] == "alert") {
-        alert(request["message"])
-    }
-})
-
 var excelInput = document.getElementById('excel');
 excelInput.type = 'file';
 let excelContents = null
@@ -12,7 +6,10 @@ excelInput.onchange = async e => excelContents = await processFile(e.target.file
 var progressInput = document.getElementById('progress');
 progressInput.type = 'file';
 let progressContents = null
-progressInput.onchange = async e => progressContents = JSON.parse(await readAsString(e.target.files[0]))
+progressInput.onchange = async e => {
+    alert("progress history provided, removing all pre-scraped files")
+    progressContents = JSON.parse(await readAsString(e.target.files[0]))
+}
 
 let scraper = document.getElementById("scrape")
 
@@ -29,7 +26,10 @@ start.addEventListener("click", () => {
         alert("atleast provide the excel sheet!")
     }
 })
-pause.addEventListener("click", () => chrome.runtime.sendMessage({ "type": "pause" }))
+pause.addEventListener("click", () => {
+    alert("Let me finish these final few documents, please - then I'll stop and generate a progress report :)")
+    chrome.runtime.sendMessage({ "type": "pause" })
+})
 
 let readAsString = (file) =>
     new Promise((resolve, reject) => {

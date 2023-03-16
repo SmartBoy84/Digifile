@@ -13,22 +13,20 @@ chrome.runtime.onMessage.addListener(async (request, sender, reply) => {
     if (request["type"] == "contents") {
 
         let contents = request["contents"]
-        success = request["history"]
 
         if (request["history"]) {
-            alertBridge("progress history provided, removing all pre-scraped files")
+            success = request["history"]
 
             console.log("Entries before: ", contents.length)
             contents = contents.filter(a => !success.some(b => a[0] == b))
             console.log("Entries after: ", contents.length)
         }
 
-        scrape(request["contents"])
+        scrape(contents)
     }
 
     if (request["type"] == "pause") {
         scraping = false
-        alertBridge("Let me finish these final few documents, please - then I'll stop and generate a progress report :)")
     }
 
     if (request["type"] == "error") { // must listen for reply here to avoid race condition
