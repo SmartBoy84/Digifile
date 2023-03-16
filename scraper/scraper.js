@@ -19,13 +19,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, reply) => {
             alertBridge("progress history provided, removing all pre-scraped files")
 
             console.log("Entries before: ", contents.length)
-            contents = contents.filter(a => !success.some(b => {
-                // console.log(b[0], a)
-                if (a[0] == b) {
-                    console.log("Found")
-                }
-                return a[0] == b
-            }))
+            contents = contents.filter(a => !success.some(b => a[0] == b))
             console.log("Entries after: ", contents.length)
         }
 
