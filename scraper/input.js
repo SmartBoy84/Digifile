@@ -1,15 +1,20 @@
-var excelInput = document.getElementById('excel');
-excelInput.type = 'file';
-let excelContents = null
-excelInput.onchange = async e => excelContents = await processFile(e.target.files[0])
+let excelInput = document.getElementById('excel');
+let progressInput = document.getElementById('progress');
 
-var progressInput = document.getElementById('progress');
-progressInput.type = 'file';
 let progressContents = null
+let excelContents = null
+
+excelInput.type = 'file';
+progressInput.type = 'file';
+
+excelInput.onchange = async e => excelContents = await processFile(e.target.files[0])
 progressInput.onchange = async e => {
     alert("progress history provided, removing all pre-scraped files")
     progressContents = JSON.parse(await readAsString(e.target.files[0]))
 }
+
+let maxInput = document.getElementById("max") // max number of tabs allowed to run at one time - if we have too many going at once then printing takes longer than our hardcoded timout value
+maxInput.value = 3
 
 let scraper = document.getElementById("scrape")
 
@@ -17,13 +22,14 @@ let start = document.getElementById("start")
 let pause = document.getElementById("pause")
 
 start.addEventListener("click", () => {
-    if (excelContents) {
+    let maxTabs = parseInt(maxInput.value)
+    if (excelContents && maxTabs > 0) {
 
         alert("scraping time!")
-        chrome.runtime.sendMessage({ "type": "contents", "contents": excelContents, "history": progressContents })
+        chrome.runtime.sendMessage({ "type": "contents", "contents": excelContents, "history": progressContents, "concurrent": maxTabs })
 
     } else {
-        alert("atleast provide the excel sheet!")
+        alert("atleast provide the correct input (number as max tabs, and excel sheet)!")
     }
 })
 pause.addEventListener("click", () => {
