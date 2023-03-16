@@ -95,6 +95,11 @@ window.addEventListener("DOMContentLoaded", async () => {
     while (true) {
         await getWait(50)
 
+        if (document.querySelector("dataroom-layout")) {
+            console.log("not in a document")
+            return
+        }
+
         let number = document.querySelector("#pageNumber")
         let loadingPages = document.querySelectorAll(".loadingIcon")
 
