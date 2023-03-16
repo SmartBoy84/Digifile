@@ -88,6 +88,7 @@ let enableButton = (ele, cFn) => {
 
 window.addEventListener("DOMContentLoaded", async () => {
 
+    console.log("loading...")
     while (true) {
         await getWait(50)
 
@@ -103,7 +104,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         if (number) {
 
             let max = parseInt(number.getAttribute("max"))
-            if (max > 0 && loadingPages.length < max - 1) { // the second case ensures that at least two pages have loaded! 
+            if (max > 0 && loadingPages.length < max) { // the second case ensures that at least two pages have loaded! 
                 // The goal is to get as close as possible to when the printService is initialized, this still isn't sufficient
 
                 console.log(max, loadingPages.length)
