@@ -80,22 +80,24 @@ chrome.runtime.onMessage.addListener(async (request, sender, reply) => {
     }
 })
 
-let scrape = async (contents, history = [], maxTabs) => {
+let scrape = async (contents, success, maxTabs) => {
 
     // store states
-    let failure = {}
     let currentlyRunning = {}
+    let failure = {}
+    let history = []
 
-    if (history) {
+    if (success) {
         console.log("Entries before: ", contents.length)
 
-        contents = contents.filter(a => !history.some(b => a[0] == b))
+        contents = contents.filter(a => !success.some(b => a[0] == b))
         if (contents.length == 0) {
             alertBridge("archive already up to data, nothing new to scrape!")
             scraping = false
             return
         }
 
+        history = success
         console.log("Entries after: ", contents.length)
     }
 
