@@ -2,9 +2,9 @@
 Chrome extension to enable download/preview buttons (i.e., digify scraper)
 
 ## Installation
+*I haven't compressed it as that makes it difficult to conveniently distribute/access the js utilities* 
 - `git clone https://github.com/smartboy84/digifile/`  
-- Go to `chrome://extensions` and `load unpacked`
-* compressing it makes it difficult to conveniently distribute js utilities*  
+- Go to `chrome://extensions` and `load unpacked` 
 
 ## Interface features
 ### PDF viewer
@@ -42,4 +42,7 @@ Can also be used when updating a local archive with new files
     - Don't worry if it freezes/accidently closes/explodes as you can use `generate_progress.mjs` to create a `progress` file to continue from where you left off
     - E.g., downloading ~1500 files took ~8 hours
 
-* Don't worry about manually closing unresponsive tab, the extension recognises this and adds it to `errors.txt` and excludes it from `progree.txt`
+
+* Feel free to manually close unresponsive tabs, the extension recognises this and adds it to `errors.txt`. 
+    - As this file isn't downloaded, it won't be included in `progress.txt` so in future re-runs the extension will try to scrape it again  
+    - While the extension can handle big files (>500 mb), it's better to just close these tabs and manually download them later
