@@ -2,18 +2,28 @@ window.addEventListener("DOMContentLoaded", async () => {
     console.log("Loaded!")
     await new Promise(resolve => setTimeout(resolve, 1000))
 
-    let command = await chrome.runtime.sendMessage({ "type": "downloader" })
+    // looping allows this window to be reused if necessary
+    while (true) {
+        
+        let command = await chrome.runtime.sendMessage({ "type": "reporter" })
 
-    let data = command["data"]
-    let fileName = command["name"]
+        if (command["type"] == "download") {
 
-    var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(data);
-    var downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", fileName);
-    document.body.appendChild(downloadAnchorNode); // required for firefox
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
+            let data = command["data"]
+            let fileName = command["name"]
 
-    window.close()
+            var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(data);
+            var downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", fileName);
+            document.body.appendChild(downloadAnchorNode); // required for firefox
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        if (command["type"] == "alert") {
+            alert(command["alert"])
+        }
+    }
+    // window.close()
 })

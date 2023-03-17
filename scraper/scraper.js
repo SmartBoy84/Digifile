@@ -1,21 +1,6 @@
-// let alertBridge = (str) => chrome.runtime.sendMessage({ "type": "alert", "message": str })
-
 let scraping = false // ugh, global variable needed to catch scraper routine
 
 let getWait = (d) => new Promise(resolve => setTimeout(resolve, d))
-
-chrome.runtime.onMessage.addListener(async (request, sender, reply) => {
-
-    if (request["type"] == "contents") {
-        console.log("max", request["concurrent"])
-        scrape(request["contents"], request["history"], request["concurrent"])
-    }
-
-    if (request["type"] == "pause") {
-        scraping = false
-    }
-
-})
 
 let waitForResponse = (cFn, id) =>
     new Promise(async (resolve, reject) => {
@@ -57,24 +42,43 @@ let waitForResponse = (cFn, id) =>
         chrome.runtime.onMessage.addListener(messageReceived)
     })
 
-let saveData = async (fileName, data) => {
+let openReporter = async (type, data) => {
+    try {
+        let id = (await chrome.tabs.create({ url: chrome.runtime.getURL("reporter/reporter.html") })).id
 
-    console.log(`Saving ${fileName}...`)
-    let id = (await chrome.tabs.create({ url: chrome.runtime.getURL("reporter/reporter.html") })).id
+        await waitForResponse((request, sender, reply) => {
 
-    await waitForResponse((request, sender, reply) => {
+            if (request["type"] == "reporter") {
+                console.log("sending data to reporter page...")
 
-        if (request["type"] == "downloader") {
-            console.log("sending data to download...")
+                reply({ "type": type, ...data })
+                return true
+            }
+            return false
+        }, id)
 
-            reply({ "name": fileName, "data": data })
-            return true
-        }
-        return false
-    }, id)
+        await waitForResponse((request, reply) => request["type"] == "reporter", id) // wait for tab to finish
+        await chrome.tabs.remove(id, null)
 
-    await waitForResponse((request, reply) => request["type"] == "downloader", id)
+    } catch (error) {
+        console.log(error)
+    }
 }
+
+let saveData = async (fileName, data) => await openReporter("download", { "name": fileName, "data": data })
+let alertBridge = async (str) => await openReporter("alert", { "alert": str })
+
+chrome.runtime.onMessage.addListener(async (request, sender, reply) => {
+
+    if (request["type"] == "contents") {
+        console.log("max", request["concurrent"])
+        scrape(request["contents"], request["history"], request["concurrent"])
+    }
+
+    if (request["type"] == "pause") {
+        scraping = false
+    }
+})
 
 let scrape = async (contents, history = [], maxTabs) => {
 
@@ -84,7 +88,14 @@ let scrape = async (contents, history = [], maxTabs) => {
 
     if (history) {
         console.log("Entries before: ", contents.length)
+
         contents = contents.filter(a => !history.some(b => a[0] == b))
+        if (contents.length == 0) {
+            alertBridge("archive already up to data, nothing new to scrape!")
+            scraping = false
+            return
+        }
+
         console.log("Entries after: ", contents.length)
     }
 
@@ -99,8 +110,6 @@ let scrape = async (contents, history = [], maxTabs) => {
 
             console.log("Reached capacity! Waiting for one to finish...")
             await Promise.race(Object.values(currentlyRunning)).catch(e => null)
-
-            console.log("Continue")
         }
 
         let name = contents[i][0]
