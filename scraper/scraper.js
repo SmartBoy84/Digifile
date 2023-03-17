@@ -122,7 +122,7 @@ let roam = async (contents, maxTabs, min, max) => {
 
             try {
                 await waitForResponse(id)
-                await getWait(getRandom(min, max) * 60).then(() => { throw "timed out, opening new document" }) // * 1000
+                await getWait(getRandom(min, max) * 60 * 1000).then(() => { throw "timed out, opening new document" }) // * 1000
             }
             catch (error) {
                 console.log(error)
