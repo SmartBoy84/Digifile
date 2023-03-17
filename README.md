@@ -1,20 +1,40 @@
 # Digifile
 Chrome extension to enable download/preview buttons (i.e., digify scraper)
 
-Enables toolbar buttons:  
-- print button opens file as pdf in same window
-- download button downloads file
+## Interface features
+### PDF viewer
+- `print` - opens file as pdf in same window
+- `download` - downloads file  
+### Extension options
+- `Concurrent pages` - allows for setting max number of pages which should be open at any one time. Keep this low to prevent crashes   
+- `Pause button` - extension gracefully pauses scraping and saves `progress.txt` and `errors.txt`
 
-* Due to API limitations, must set automatic downlaod in browser and also set location to save scraped files there
 
-Can also click extension button to scrape, must provide an excel sheet with all the links of the files in the database  
-These can be found by clicking the three dots in the main page and selecting `export file index`  
-Can take a very long time - ~10 sec per 15 pages  
+## Utilities
+### `build_heirarchy.mjs {download_dir}`
+As browsers do not allow selection of download directory, scraper has to download files in the same folder   
+This utility can be used to extract paths from the filenames and re-create the file heirarchy
 
-After it finishes, run `build_heirarchy.mjs {download_dir}` to re-built the file heirarchy!
+### `generate_progress.mjs`
+If the extension is stopped before completion, you can use this utility to create a `progress.txt` file which is can be supplied to the extension to allow it to continue from the point at which it stopped   
+Can also be used when updating a local archive with new files 
 
-Pressing the `pause` button generates a list of all the currently indexed files.  
-I've also provided a small `generate_progress.mjs` helper utility to construct this progress file in case the process was stopped some otherway. 
-* This utility will generate the progress report regardless of whether `build_heirarchy.mjs` has been run on it or not - this allows you to regularly update your database  
+**Note**: *`progress.txt` generation is the same regardless of if `build_heirarchy.mjs` has been run on it or not*
 
-Supply `progress.txt` when scraping to continue from where the scraper left off 
+## Notes
+
+* Due to API limitations, must set files to automatically download to some location
+
+* Process can take a very long time - ~10 sec per 15 pages. 
+    - Don't worry if it freezes/accidently closes/explodes as you can use `generate_progress.mjs` to create a `progress` file to continue from where you left off
+    - E.g., downloading ~1500 files took ~8 hours
+
+* Don't worry about manually closing unresponsive tab, the extension recognises this and adds it to `errors.txt`
+
+### Scraping/updating
+1. If continuing/updating and if `progress.txt` was deleted/wasn't downloaded by the extension, run the helper utility to create it  
+2. Download the file index from digify, may take a couple of minutes   
+4. Change download directory to where you have/want your archive to be made   
+3. Plug in the `progress.txt` file (if updating) and select the downloaded excel file listing
+4. When [new] files have been downloaded, run the heirarchy builder to merge/organise the files
+5. Review `errors.txt` to determine any errors that occurred 
