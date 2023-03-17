@@ -1,10 +1,47 @@
 <html>
 
-<div><span>Select progress file</span><input id="progress" type="file"></div>
-<div><span>Select excel sheet</span><input id="excel" type="file" accept=".xls,.xlsx"></div>
-<div>Max concurrent: <input id="max"></div>
-<button id="start" style="background-color:chartreuse;">Scrape</button>
-<button id="pause" style="background-color: tomato">Pause</button>
+<head>
+    <style>
+        * {
+            font-size: 15px;
+            padding: 0;
+            margin: 0;
+        }
+
+        div {
+            padding: 5px;
+            border-bottom-color: black;
+            border-bottom-style: solid;
+            border-bottom-width: 2px;
+        }
+
+        body {
+            display: flex;
+            align-content: center;
+            justify-content: center;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div>
+        <span>Select progress file</span><input id="progress" type="file">
+    </div>
+    <div>
+        <span>Select excel sheet</span><input id="excel" type="file" accept=".xls,.xlsx">
+    </div>
+    <div>
+        <span>Max concurrent: </span><input style="width: 10%;" id="max">
+    </div>
+    <div>
+        <button id="start" style="background-color:chartreuse;">Scrape</button>
+        <button id="pause" style="background-color: tomato">Pause</button>
+    </div>
+</body>
+
 <script src="./input.js"></script>
 <script src="./jszip.js"></script>
 <script src="./xlsx.full.min.js"></script>
