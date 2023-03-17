@@ -4,7 +4,8 @@ Chrome extension to enable download/preview buttons (i.e., digify scraper)
 ## Installation
 *I haven't compressed it as that makes it difficult to conveniently distribute/access the js utilities* 
 - `git clone https://github.com/smartboy84/digifile/`  
-- Go to `chrome://extensions` and `load unpacked` 
+- Go to `chrome://extensions` and `load unpacked`  
+- When running, open the console (`inspect views: service worker` in extension page) to monitor the scraping process   
 
 ## Interface features
 ### PDF viewer
@@ -13,7 +14,6 @@ Chrome extension to enable download/preview buttons (i.e., digify scraper)
 ### Extension options
 - `Concurrent pages` - allows for setting max number of pages which should be open at any one time. Keep this low to prevent crashes   
 - `Pause button` - extension gracefully pauses scraping and saves `progress.txt` and `errors.txt`
-
 
 ## Utilities
 ### `build_heirarchy.mjs {download_dir}`
