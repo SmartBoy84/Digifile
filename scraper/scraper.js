@@ -1,8 +1,22 @@
-let scraping = false // ugh, global variable needed to catch scraper routine
-
 let getWait = (d) => new Promise(resolve => setTimeout(resolve, d))
 
-let waitForResponse = (cFn, id) =>
+let saveData = async (fileName, data) => await openReporter("download", { "name": fileName, "data": data })
+let alertBridge = async (str) => await openReporter("alert", { "alert": str })
+
+chrome.runtime.onMessage.addListener(async (request, sender, reply) => {
+
+    if (request["type"] == "contents") {
+        console.log("max", request["concurrent"])
+        scrape(request["contents"], request["history"], request["concurrent"])
+    }
+
+    if (request["type"] == "roam") {
+        console.log(request)
+        roam(request["contents"], request["concurrent"], request["min"], request["max"])
+    }
+})
+
+let waitForResponse = (id, cFn) =>
     new Promise(async (resolve, reject) => {
 
         let tabRemoval = function (tabId, removeInfo) {
@@ -46,7 +60,7 @@ let openReporter = async (type, data) => {
     try {
         let id = (await chrome.tabs.create({ url: chrome.runtime.getURL("reporter/reporter.html") })).id
 
-        await waitForResponse((request, sender, reply) => {
+        await waitForResponse(id, (request, sender, reply) => {
 
             if (request["type"] == "reporter") {
                 console.log("sending data to reporter page...")
@@ -55,9 +69,9 @@ let openReporter = async (type, data) => {
                 return true
             }
             return false
-        }, id)
+        })
 
-        await waitForResponse((request, reply) => request["type"] == "reporter", id) // wait for tab to finish
+        await waitForResponse(id, (request, reply) => request["type"] == "reporter") // wait for tab to finish
         await chrome.tabs.remove(id, null)
 
     } catch (error) {
@@ -65,20 +79,61 @@ let openReporter = async (type, data) => {
     }
 }
 
-let saveData = async (fileName, data) => await openReporter("download", { "name": fileName, "data": data })
-let alertBridge = async (str) => await openReporter("alert", { "alert": str })
+let closerGen = (message, cFn) => new Promise((masterResolve, reject) => {
+    chrome.runtime.onMessage.addListener(async function (request, sender, reply) {
+        if (request["type"] == "stop") {
 
-chrome.runtime.onMessage.addListener(async (request, sender, reply) => {
+            console.log("stopping...")
+            alertBridge(message)
 
-    if (request["type"] == "contents") {
-        console.log("max", request["concurrent"])
-        scrape(request["contents"], request["history"], request["concurrent"])
-    }
+            chrome.runtime.onMessage.removeListener(arguments.callee)
 
-    if (request["type"] == "pause") {
-        scraping = false
-    }
+            masterResolve()
+            cFn()
+        }
+    })
 })
+
+let roam = async (contents, maxTabs, min, max) => {
+
+    let getRandom = (low, high) => Math.floor(low + (Math.random() * (high - low)))
+    let currentlyRunning = {}
+
+    let stop = false
+    closerGen("finished studying? returning from travels", async () => {
+        stop = true
+
+        for (let id of Object.keys(currentlyRunning)) {
+            await chrome.tabs.remove(parseInt(id), null)
+        }
+    })
+
+    while (true) {
+
+        if (Object.keys(currentlyRunning).length == maxTabs) {
+            console.log("Reached capacity! Waiting for one to finish...")
+            await Promise.race(Object.values(currentlyRunning)).catch(e => null)
+        }
+
+        if (stop) { break }
+
+        let id = (await chrome.tabs.create({ url: contents[getRandom(0, contents.length - 1)][1] })).id
+        currentlyRunning[id] = new Promise(async (resolve, reject) => {
+
+            try {
+                await waitForResponse(id)
+                await getWait(getRandom(min, max) * 60).then(() => { throw "timed out, opening new document" }) // * 1000
+            }
+            catch (error) {
+                console.log(error)
+
+                await chrome.tabs.remove(id, null).catch((e) => null)
+                delete currentlyRunning[id]
+                resolve()
+            }
+        })
+    }
+}
 
 let scrape = async (contents, success, maxTabs) => {
 
@@ -93,7 +148,6 @@ let scrape = async (contents, success, maxTabs) => {
         contents = contents.filter(a => !success.some(b => a[0] == b))
         if (contents.length == 0) {
             alertBridge("archive already up to data, nothing new to scrape!")
-            scraping = false
             return
         }
 
@@ -101,11 +155,10 @@ let scrape = async (contents, success, maxTabs) => {
         console.log("Entries after: ", contents.length)
     }
 
-    scraping = true
+    let stop = false
+    closerGen("Let me finish these final few documents, please - then I'll stop and generate a progress report :)", async () => stop = true)
 
     for (let i = 0; i < contents.length; i++) {
-
-        if (scraping == false) { break } // allow for user to stop scraping
 
         // if more that the maxTabs are running at once then wait for one to finish before continuing
         if (Object.keys(currentlyRunning).length >= maxTabs) {
@@ -113,6 +166,8 @@ let scrape = async (contents, success, maxTabs) => {
             console.log("Reached capacity! Waiting for one to finish...")
             await Promise.race(Object.values(currentlyRunning)).catch(e => null)
         }
+
+        if (stop) { break }
 
         let name = contents[i][0]
         let url = contents[i][1]
@@ -126,18 +181,18 @@ let scrape = async (contents, success, maxTabs) => {
                 let id = (await chrome.tabs.create({ url: url })).id
                 console.log("waiting for status request")
 
-                await waitForResponse((request, sender, reply) => {
+                await waitForResponse(id, (request, sender, reply) => {
                     if (request["type"] == "scrape") {
 
                         reply(name)
                         return true
                     }
                     return false
-                }, id)
+                })
 
                 console.log("and we're off!")
 
-                await waitForResponse((request, sender, reply) => { // store our promise in here but don't wait for it here
+                await waitForResponse(id, (request, sender, reply) => { // store our promise in here but don't wait for it here
 
                     if (request["type"] == "error") { // must listen for reply here to avoid race condition
                         console.log("got reply from", request["name"])
@@ -160,7 +215,7 @@ let scrape = async (contents, success, maxTabs) => {
                         delete currentlyRunning[request["name"]] // finished!
                         return true
                     }
-                }, id)
+                })
 
                 resolve()
 

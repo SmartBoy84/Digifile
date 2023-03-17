@@ -13,28 +13,63 @@ progressInput.onchange = async e => {
     progressContents = JSON.parse(await readAsString(e.target.files[0]))
 }
 
-let maxInput = document.getElementById("max") // max number of tabs allowed to run at one time - if we have too many going at once then printing takes longer than our hardcoded timout value
-maxInput.value = 3
+let maxPages = document.getElementById("maxPages") // max number of tabs allowed to run at one time - if we have too many going at once then printing takes longer than our hardcoded timout value
+let minTime = document.getElementById("minTime") // minimum time to spend on each page
+let maxTime = document.getElementById("maxTime") // max time to spend on each page
 
-let scraper = document.getElementById("scrape")
+maxPages.value = 3
+minTime.value = 30
+maxTime.value = 50
 
 let start = document.getElementById("start")
 let pause = document.getElementById("pause")
+let roam = document.getElementById("roam")
 
 start.addEventListener("click", () => {
-    let maxTabs = parseInt(maxInput.value)
-    if (excelContents && maxTabs > 0) {
 
-        alert("scraping time!")
-        chrome.runtime.sendMessage({ "type": "contents", "contents": excelContents, "history": progressContents, "concurrent": maxTabs })
-
-    } else {
-        alert("atleast provide the correct input (number as max tabs, and excel sheet)!")
+    if (!excelContents) {
+        alert("please provide excel file listing")
+        return
     }
+
+    let maxTabs = parseInt(maxPages.value)
+
+    if (maxTabs == 0) {
+        alert("please specify max concurrent tabs to open!")
+        return
+    }
+
+    alert("scraping time!")
+    chrome.runtime.sendMessage({ "type": "contents", "contents": excelContents, "history": progressContents, "concurrent": maxTabs })
 })
+
 pause.addEventListener("click", () => {
-    alert("Let me finish these final few documents, please - then I'll stop and generate a progress report :)")
-    chrome.runtime.sendMessage({ "type": "pause" })
+    chrome.runtime.sendMessage({ "type": "stop" })
+})
+
+roam.addEventListener("click", () => {
+
+    let max = parseInt(maxTime.value)
+    let min = parseInt(minTime.value)
+    let maxTabs = parseInt(maxPages.value)
+
+    if (!max || !min) {
+        alert("Please specify both max/min times to roam!")
+        return
+    }
+
+    if (maxTabs == 0) {
+        alert("please specify max concurrent tabs to open!")
+        return
+    }
+
+    if (!excelContents) {
+        alert("please provide excel file listing")
+        return
+    }
+
+    alert("Starting traveller, happy studying!")
+    chrome.runtime.sendMessage({ "type": "roam", "max": max, "min": min, "contents": excelContents, "concurrent": maxTabs })
 })
 
 let readAsString = (file) =>

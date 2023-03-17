@@ -13,7 +13,9 @@ Chrome extension to enable download/preview buttons (i.e., digify scraper)
 - `download` - downloads file  
 ### Extension options
 - `Concurrent pages` - allows for setting max number of pages which should be open at any one time. Keep this low to prevent crashes   
+- `Max/min` - sets the range the `roamer` should wait on each document (default is 30-50 minutes)
 - `Pause button` - extension gracefully pauses scraping and saves `progress.txt` and `errors.txt`
+- `Roam` - I added this so that digify reports me having been on it (evades suspicion)
 
 ## Utilities
 ### `build_heirarchy.mjs {download_dir}`
