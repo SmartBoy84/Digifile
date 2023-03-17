@@ -9,7 +9,7 @@ progressInput.type = 'file';
 
 excelInput.onchange = async e => excelContents = await processFile(e.target.files[0])
 progressInput.onchange = async e => {
-    alert("progress history provided, removing all pre-scraped files")
+    alert("progress history provided, will remove all pre-scraped files")
     progressContents = JSON.parse(await readAsString(e.target.files[0]))
 }
 
