@@ -27,23 +27,33 @@
 </head>
 
 <body>
+    <h1>Scraper</h1>
     <div>
-        <span>Select progress file</span><input id="progress" type="file">
+        <span>Select progress file</span><input class="fileInput" data-type="progress" type="file">
     </div>
     <div>
-        <span>Select excel sheet</span><input id="excel" type="file" accept=".xls,.xlsx">
+        <span>Select excel sheet</span><input type="file" class="fileInput" data-type="excel" accept=".xls,.xlsx">
     </div>
     <div>
-        <span>Max concurrent: </span><input style="width: 10%;" id="maxPages">
+        <span>Max concurrent: </span><input style="width: 10%;" class="setting" data-type="maxPages">
     </div>
+    <div>
+        <button class="button" data-type="start" style="background-color:chartreuse;">Scrape</button>
+        <button class="button" data-type="pause" style="background-color: tomato">Pause</button>
+    </div>
+    <div style="margin-top: 10px;"></div>
+    <h1>Roamer</h1>
     <div>
         <span style="display: block;">Minutes per page:</span>
-        <span>Min: </span><input style="width: 10%;" id="minTime"> <span>Max: </span><input style="width: 10%;" id="maxTime">
+        <span>Min: </span><input style="width: 10%;" class="setting" data-type="minTime"> <span>Max: </span><input
+            style="width: 10%;" class="setting" data-type="maxTime">
     </div>
     <div>
-        <button id="start" style="background-color:chartreuse;">Scrape</button>
-        <button id="pause" style="background-color: tomato">Pause</button>
-        <button id="roam" style="background-color: skyblue">Roam</button>
+        <span>Scroll interval (s):
+        </span><input style="width: 10%;" class="setting" data-type="scrollSpeed">
+    </div>
+    <div>
+        <button class="button" data-type="roam" style="background-color: skyblue">Roam</button>
     </div>
 </body>
 

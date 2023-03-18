@@ -125,25 +125,57 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     // cater for scraper's demands, if present
     console.log("loaded, asking for my type")
-    let myType = await chrome.runtime.sendMessage({ "type": "scrape" })
+    let response = await chrome.runtime.sendMessage({ "type": "document" }) // if there is no reply, then this is a normal document
 
-    console.log("My type is:", myType ? "automatically scraped" : "normal page")
+    console.log("My type is:", response ? response["type"] : "normal page")
 
     // prepare printing
     var event = new CustomEvent("beforeprint")
     document.dispatchEvent(event)
 
-    if (myType) {
+    if (response) {
+        if (response["type"] == "scraper") {
+            console.log(response["name"])
 
-        let error = await saveFile(false, myType)
+            let error = await saveFile(false, response["name"])
 
-        if (error) { // if a file wasn't able to be scraped then save a dummy file so I know of it
-            let placeholderPDF = new jsPDF()
-            await placeholderPDF.text(error, 10, 10)
-            await placeholderPDF.save(myType)
+            if (error) { // if a file wasn't able to be scraped then save a dummy file so I know of it
+                let placeholderPDF = new jsPDF()
+                await placeholderPDF.text(error, 10, 10)
+                await placeholderPDF.save(response["name"])
+            }
+
+            await chrome.runtime.sendMessage({ "type": "error", "name": response["name"], "error": error ? error : "" })
+
+        } else if (response["type"] == "traveller" && !getError()) {
+
+            let max = parseInt(document.querySelector("#pageNumber").getAttribute("max"))
+            let intervals = Math.floor(response["time"] / response["scrollSpeed"])
+
+            if (max > 0) {
+                max -= 1
+
+                console.log(response)
+
+                let pgNum = document.getElementById("pageNumber")
+                let page = 1
+                let adder = 1
+
+                while (intervals-- > 0) {
+
+                    await getWait(response["scrollSpeed"] * 1000)
+                    page += adder
+
+                    pgNum.value = page
+                    pgNum.dispatchEvent(new Event('change'));
+
+                    if (page == 1 || page == max) {
+                        adder *= -1
+                    }
+                }
+            }
         }
 
-        await chrome.runtime.sendMessage({ "type": "error", "name": myType, "error": error ? error : "" })
         window.close() // wicked
     }
 

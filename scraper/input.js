@@ -1,76 +1,100 @@
-let excelInput = document.getElementById('excel');
-let progressInput = document.getElementById('progress');
+let files = {
 
-let progressContents = null
-let excelContents = null
+    "excel": {
+        "onchange": async e => await processFile(e.target.files[0])
+    },
 
-excelInput.type = 'file';
-progressInput.type = 'file';
-
-excelInput.onchange = async e => excelContents = await processFile(e.target.files[0])
-progressInput.onchange = async e => {
-    alert("progress history provided, will remove all pre-scraped files")
-    progressContents = JSON.parse(await readAsString(e.target.files[0]))
+    "progress": {
+        "onchange": async e => {
+            alert("progress history provided, will remove all pre-scraped files")
+            return JSON.parse(await readAsString(e.target.files[0]))
+        }
+    }
 }
 
-let maxPages = document.getElementById("maxPages") // max number of tabs allowed to run at one time - if we have too many going at once then printing takes longer than our hardcoded timout value
-let minTime = document.getElementById("minTime") // minimum time to spend on each page
-let maxTime = document.getElementById("maxTime") // max time to spend on each page
+for (let fileInput of document.querySelectorAll(".fileInput")) {
 
-maxPages.value = 3
-minTime.value = 30
-maxTime.value = 50
+    let name = fileInput.dataset.type
+    fileInput.onchange = async (e) => files[name]["data"] = await files[name]["onchange"](e)
 
-let start = document.getElementById("start")
-let pause = document.getElementById("pause")
-let roam = document.getElementById("roam")
+    fileInput.dataset.type = 'file'
+}
 
-start.addEventListener("click", () => {
+let settings = {
+    "maxPages": 3, // max number of concurrent pages
+    "minTime": 30, // min
+    "maxTime": 50, // min
+    "scrollSpeed": 5 // seconds
+}
 
-    if (!excelContents) {
-        alert("please provide excel file listing")
-        return
+let syncSetting = () => {
+
+    let settingEl = document.querySelectorAll(".setting")
+
+    for (let setting of settingEl) {
+        let name = setting.dataset.type
+
+        if (!setting.value) {
+            setting.value = settings[name]
+        } else {
+            settings[name] = parseInt(setting.value)
+        }
     }
+}
+syncSetting()
 
-    let maxTabs = parseInt(maxPages.value)
+let interface = {
+    "start": () => {
 
-    if (maxTabs == 0) {
-        alert("please specify max concurrent tabs to open!")
-        return
+        if (!files["excel"]["data"]) {
+            alert("please provide excel file listing")
+            return
+        }
+
+        if (settings["maxPages"] == 0) {
+            alert("please specify max concurrent tabs to open!")
+            return
+        }
+
+        alert("scraping time!")
+        chrome.runtime.sendMessage({ "type": "contents", "contents": files["excel"]["data"], "history": files["progress"]["data"], ...settings })
+    },
+
+    "pause": () => {
+        chrome.runtime.sendMessage({ "type": "stop" })
+    },
+
+    "roam": () => {
+
+        if (!settings["maxTime"] || !settings["minTime"] || !settings["scrollSpeed"]) {
+            alert("Please specify all roamer settings!")
+            return
+        }
+
+        if (!settings["maxPages"]) {
+            alert("please specify max concurrent tabs to open!")
+            return
+        }
+
+        if (!files["excel"]["data"]) {
+            alert("please provide excel file listing")
+            return
+        }
+
+        alert("Starting traveller, happy studying!")
+        chrome.runtime.sendMessage({ "type": "roam", "contents": files["excel"]["data"], ...settings })
     }
+}
 
-    alert("scraping time!")
-    chrome.runtime.sendMessage({ "type": "contents", "contents": excelContents, "history": progressContents, "concurrent": maxTabs })
-})
+for (let button of document.querySelectorAll(".button")) {
 
-pause.addEventListener("click", () => {
-    chrome.runtime.sendMessage({ "type": "stop" })
-})
+    let name = button.dataset.type
 
-roam.addEventListener("click", () => {
-
-    let max = parseInt(maxTime.value)
-    let min = parseInt(minTime.value)
-    let maxTabs = parseInt(maxPages.value)
-
-    if (!max || !min) {
-        alert("Please specify both max/min times to roam!")
-        return
-    }
-
-    if (maxTabs == 0) {
-        alert("please specify max concurrent tabs to open!")
-        return
-    }
-
-    if (!excelContents) {
-        alert("please provide excel file listing")
-        return
-    }
-
-    alert("Starting traveller, happy studying!")
-    chrome.runtime.sendMessage({ "type": "roam", "max": max, "min": min, "contents": excelContents, "concurrent": maxTabs })
-})
+    button.addEventListener("click", () => {
+        syncSetting()
+        interface[name]()
+    })
+}
 
 let readAsString = (file) =>
     new Promise((resolve, reject) => {

@@ -5,14 +5,21 @@ let alertBridge = async (str) => await openReporter("alert", { "alert": str })
 
 chrome.runtime.onMessage.addListener(async (request, sender, reply) => {
 
+    // "maxPages": 3, // max number of concurrent pages
+    // "minTime": 30, // min
+    // "maxTime": 50, // min
+    // "scrollAmount": 200, // px
+    // "scrollSpeed": 200 // ms
+
     if (request["type"] == "contents") {
-        console.log("max", request["concurrent"])
-        scrape(request["contents"], request["history"], request["concurrent"])
+        console.log("max pages", request["maxPages"])
+        console.log(request)
+        scrape(request["contents"], request["history"], request["maxPages"])
     }
 
     if (request["type"] == "roam") {
         console.log(request)
-        roam(request["contents"], request["concurrent"], request["min"], request["max"])
+        roam(request["contents"], request["maxPages"], request["minTime"], request["maxTime"], request["scrollSpeed"])
     }
 })
 
@@ -94,13 +101,13 @@ let closerGen = (message, cFn) => new Promise((masterResolve, reject) => {
     })
 })
 
-let roam = async (contents, maxTabs, min, max) => {
+let roam = async (contents, maxTabs, min, max, scrollSpeed) => {
 
     let getRandom = (low, high) => Math.floor(low + (Math.random() * (high - low)))
     let currentlyRunning = {}
 
     let stop = false
-    closerGen("finished studying? returning from travels", async () => {
+    closerGen("Welcome back!", async () => {
         stop = true
 
         for (let id of Object.keys(currentlyRunning)) {
@@ -121,8 +128,16 @@ let roam = async (contents, maxTabs, min, max) => {
         currentlyRunning[id] = new Promise(async (resolve, reject) => {
 
             try {
-                await waitForResponse(id)
-                await getWait(getRandom(min, max) * 60 * 1000).then(() => { throw "timed out, opening new document" }) // * 1000
+                await waitForResponse(id, (request, sender, reply) => {
+                    if (request["type"] == "document") {
+
+                        reply({ "type": "traveller", "time": getRandom(min, max) * 60 * 1000, "scrollSpeed": scrollSpeed })
+                        return true
+                    }
+                    return false
+                })
+
+                await waitForResponse(id) // wait for tab to timeout or be closed, throw regardless of status
             }
             catch (error) {
                 console.log(error)
@@ -182,9 +197,9 @@ let scrape = async (contents, success, maxTabs) => {
                 console.log("waiting for status request")
 
                 await waitForResponse(id, (request, sender, reply) => {
-                    if (request["type"] == "scrape") {
+                    if (request["type"] == "document") {
 
-                        reply(name)
+                        reply({ "type": "scraper", "name": name })
                         return true
                     }
                     return false
