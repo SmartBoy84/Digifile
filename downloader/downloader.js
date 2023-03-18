@@ -149,28 +149,27 @@ window.addEventListener("DOMContentLoaded", async () => {
 
         } else if (response["type"] == "traveller" && !getError()) {
 
-            let max = parseInt(document.querySelector("#pageNumber").getAttribute("max"))
+            let max = parseInt(document.getElementById("viewer").offsetHeight)
             let intervals = Math.floor(response["time"] / response["scrollSpeed"])
+            let viewer = document.getElementById("viewerContainer")
 
             if (max > 0) {
-                max -= 1
 
+                let current = 0
                 console.log(response)
 
-                let pgNum = document.getElementById("pageNumber")
-                let page = 1
-                let adder = 1
+                let adder = response["scrollStride"]
 
                 while (intervals-- > 0) {
 
-                    await getWait(response["scrollSpeed"] * 1000)
-                    page += adder
+                    await getWait(response["scrollSpeed"])
+                    current += adder
 
-                    pgNum.value = page
-                    pgNum.dispatchEvent(new Event('change'));
+                    viewer.scroll(0, current)
 
-                    if (page == 1 || page == max) {
+                    if (current <= 0 || current >= max) {
                         adder *= -1
+                        current = current >= max ? max : current <= 0 ? 0 : current
                     }
                 }
             }

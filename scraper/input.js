@@ -24,7 +24,8 @@ let settings = {
     "maxPages": 3, // max number of concurrent pages
     "minTime": 30, // min
     "maxTime": 50, // min
-    "scrollSpeed": 5 // seconds
+    "scrollSpeed": 5, // seconds
+    "scrollStride": 100 // px
 }
 
 let syncSetting = () => {
@@ -37,7 +38,7 @@ let syncSetting = () => {
         if (!setting.value) {
             setting.value = settings[name]
         } else {
-            settings[name] = parseInt(setting.value)
+            settings[name] = parseFloat(setting.value)
         }
     }
 }
@@ -66,7 +67,7 @@ let interface = {
 
     "roam": () => {
 
-        if (!settings["maxTime"] || !settings["minTime"] || !settings["scrollSpeed"]) {
+        if (!settings["maxTime"] || !settings["minTime"] || !settings["scrollSpeed"] || !settings["scrollStride"]) {
             alert("Please specify all roamer settings!")
             return
         }

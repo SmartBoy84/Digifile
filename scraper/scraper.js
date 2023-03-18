@@ -19,7 +19,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, reply) => {
 
     if (request["type"] == "roam") {
         console.log(request)
-        roam(request["contents"], request["maxPages"], request["minTime"], request["maxTime"], request["scrollSpeed"])
+        roam(request["contents"], request["maxPages"], request["minTime"], request["maxTime"], request["scrollSpeed"], request["scrollStride"])
     }
 })
 
@@ -101,7 +101,7 @@ let closerGen = (message, cFn) => new Promise((masterResolve, reject) => {
     })
 })
 
-let roam = async (contents, maxTabs, min, max, scrollSpeed) => {
+let roam = async (contents, maxTabs, min, max, scrollSpeed, scrollStride) => {
 
     let getRandom = (low, high) => Math.floor(low + (Math.random() * (high - low)))
     let currentlyRunning = {}
@@ -131,7 +131,7 @@ let roam = async (contents, maxTabs, min, max, scrollSpeed) => {
                 await waitForResponse(id, (request, sender, reply) => {
                     if (request["type"] == "document") {
 
-                        reply({ "type": "traveller", "time": getRandom(min, max) * 60 * 1000, "scrollSpeed": scrollSpeed })
+                        reply({ "type": "traveller", "time": getRandom(min, max) * 60 * 1000, "scrollSpeed": scrollSpeed * 1000, "scrollStride": scrollStride })
                         return true
                     }
                     return false
