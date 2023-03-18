@@ -8,11 +8,17 @@
             margin: 0;
         }
 
+        input {
+            display: inline-block;
+            width: 200px;
+            /* Yeah I hardcode widths, what's YOUR problem? */
+        }
+
         div {
             padding: 5px;
-            border-bottom-color: black;
-            border-bottom-style: solid;
-            border-bottom-width: 2px;
+            border-top-color: black;
+            border-top-style: solid;
+            border-top-width: 2px;
         }
 
         body {
@@ -20,8 +26,13 @@
             align-content: center;
             justify-content: center;
             flex-direction: column;
+            text-align: center;
             height: 100%;
             width: 100%;
+        }
+
+        h1 {
+            text-align: center;
         }
     </style>
 </head>
@@ -39,10 +50,6 @@
     <div>
         <span>Select progress file</span><input class="fileInput" data-type="progress" type="file">
     </div>
-    <div>
-        <button class="button" data-type="start" style="background-color:chartreuse;">Scrape</button>
-        <button class="button" data-type="pause" style="background-color: tomato">Pause</button>
-    </div>
     <div style="margin-top: 10px;"></div>
     <h1>Roamer</h1>
     <div>
@@ -54,8 +61,10 @@
         <span>Scroll interval (s):
         </span><input style="width: 10%;" class="setting" data-type="scrollSpeed">
     </div>
-    <div>
+    <div style="text-align: center;">
+        <button class="button" data-type="start" style="background-color:chartreuse;">Scrape</button>
         <button class="button" data-type="roam" style="background-color: skyblue">Roam</button>
+        <button class="button" data-type="pause" style="background-color: tomato">Pause</button>
     </div>
 </body>
 
