@@ -20,11 +20,11 @@ Chrome extension to enable download/preview buttons (i.e., digify scraper)
 - `Roam` - I added this so that digify reports me having been on it (evades suspicion)
 
 ## Utilities
-### `build_heirarchy.mjs {download_dir}`
+### `scripts/build_heirarchy.mjs {download_dir}`
 As browsers do not allow selection of download directory, scraper has to download files in the same folder   
 This utility can be used to extract paths from the filenames and re-create the file heirarchy
 
-### `generate_progress.mjs`
+### `scripts/generate_progress.mjs`
 If the extension is stopped before completion, you can use this utility to create a `progress.txt` file which is can be supplied to the extension to allow it to continue from the point at which it stopped   
 Can also be used when updating a local archive with new files 
 
