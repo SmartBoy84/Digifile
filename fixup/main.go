@@ -63,9 +63,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer output.Close()
+	defer file.Close()
 
-	encoder := json.NewEncoder(output)
+	encoder := json.NewEncoder(file)
 	encoder.SetEscapeHTML(false)
 
 	encoder.SetEscapeHTML(false)
