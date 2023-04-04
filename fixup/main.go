@@ -16,6 +16,7 @@ func main() {
 	}
 
 	targetPath := os.Args[1]
+	targetPath = strings.ReplaceAll(targetPath, `\`, "/")
 
 	pdfFiles, err := filepath.Glob(filepath.Join(targetPath, "*.pdf"))
 	if err != nil {
@@ -45,13 +46,13 @@ func main() {
 		}
 		if !info.IsDir() && strings.ToLower(filepath.Ext(path)) == ".pdf" {
 
+			path = strings.ReplaceAll(path, `\`, "/")
+
 			path = strings.TrimPrefix(path, targetPath)
 			path = strings.TrimPrefix(path, "/")
-			path = strings.TrimPrefix(path, `\`)
 			path = "/" + path
 
 			path = strings.ReplaceAll(path, "//", "/")
-			path = strings.ReplaceAll(path, `\`, "$$")
 			path = strings.ReplaceAll(path, "/", "$$")
 
 			allFiles = append(allFiles, path)
@@ -59,7 +60,7 @@ func main() {
 		return nil
 	})
 
-	file, err := os.OpenFile("target.txt", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	file, err := os.OpenFile("progress.txt", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		panic(err)
 	}
