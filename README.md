@@ -20,13 +20,12 @@ Chrome extension to enable download/preview buttons (i.e., digify scraper)
 - `Roam` - I added this so that digify reports me having been on it (evades suspicion)
 
 ## Utilities
-### `scripts/build_heirarchy.mjs {download_dir}`
+### `fixup {download_dir}`
 As browsers do not allow selection of download directory, scraper has to download files in the same folder   
-This utility can be used to extract paths from the filenames and re-create the file heirarchy
+This utility extract paths from the filenames and re-creates the file heirarchy 
+It writes a `progress.txt` file (made regardless of file heirarchy has been regenerated or not) which can be provided to the extension to continue from where it left off in the event of some unforseen accident (e.g., computer explodes)  
 
-### `scripts/generate_progress.mjs`
-If the extension is stopped before completion, you can use this utility to create a `progress.txt` file which is can be supplied to the extension to allow it to continue from the point at which it stopped   
-Can also be used when updating a local archive with new files 
+*I have compiled this for various platforms and put it in releases*
 
 **Note**: *`progress.txt` generation is the same regardless of if `build_heirarchy.mjs` has been run or not*
 
@@ -35,15 +34,15 @@ Can also be used when updating a local archive with new files
 2. Download the file index from digify, may take a couple of minutes   
 4. Change download directory to where you have/want your archive to be made   
 3. Plug in the `progress.txt` file (if updating) and select the downloaded excel file listing
-4. When [new] files have been downloaded, run the heirarchy builder to merge/organise the files
-5. Review `errors.txt` to determine any errors that occurred 
+4. When [new] files have been downloaded, run the heirarchy builder to merge/organise the files and create `progress.txt`
+5. Review `errors.txt` (if it was created/downlaoded) to determine any errors that occurred 
 
 ## Notes
 
 * Due to API limitations, must set files to automatically download to some location
 
 * Process can take a very long time - ~10 sec per 15 pages. 
-    - Don't worry if it freezes/accidently closes/explodes as you can use `generate_progress.mjs` to create a `progress` file to continue from where you left off
+    - Don't worry if it freezes/accidently closes/explodes as you can use `fixup` to create a `progress` file to continue from where you left off
     - E.g., downloading ~1500 files took ~8 hours
 
 

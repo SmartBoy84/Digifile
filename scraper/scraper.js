@@ -155,7 +155,6 @@ let scrape = async (contents, success, maxTabs) => {
     // store states
     let currentlyRunning = {}
     let failure = {}
-    let history = []
 
     if (success) {
         console.log("Entries before: ", contents.length)
@@ -166,7 +165,6 @@ let scrape = async (contents, success, maxTabs) => {
             return
         }
 
-        history = success
         console.log("Entries after: ", contents.length)
     }
 
@@ -221,8 +219,6 @@ let scrape = async (contents, success, maxTabs) => {
                                 reply({ "received": true })
 
                             }
-
-                            history.push(request["name"]) // due to the nature of all this, I can't afford to save a dummy file and not count it as a success, ya know?
                         }
 
                         console.log("finished with ", request["name"])
@@ -250,10 +246,11 @@ let scrape = async (contents, success, maxTabs) => {
 
     console.log(failure)
 
-    await Promise.allSettled([
-        saveData("progress.txt", JSON.stringify(history)),
-        saveData("errors.txt", JSON.stringify(failure))
-    ])
+    if (Object.keys(failure) > 0) {
+        await Promise.allSettled([
+            saveData("errors.txt", JSON.stringify(failure))
+        ])
+    }
 
     console.log("WE FINISHED BOI!")
     chrome.runtime.reload() // much easier this way
