@@ -10,13 +10,17 @@ import (
 )
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Println("Please supply path where the pdfs are stored!")
-		return
-	}
 
-	targetPath := os.Args[1]
-	targetPath = strings.ReplaceAll(targetPath, `\`, "/")
+	var targetPath string
+
+	if len(os.Args) < 2 {
+		targetPath = "."
+	} else {
+		targetPath = os.Args[1]
+		targetPath = strings.ReplaceAll(targetPath, `\`, "/")
+	
+	}
+	fmt.Printf("Processing %s", targetPath)
 
 	pdfFiles, err := filepath.Glob(filepath.Join(targetPath, "*.pdf"))
 	if err != nil {
@@ -40,7 +44,7 @@ func main() {
 	}
 
 	allFiles := make([]string, 0)
-	filepath.Walk(os.Args[1], func(path string, info fs.FileInfo, err error) error {
+	filepath.Walk(targetPath, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}

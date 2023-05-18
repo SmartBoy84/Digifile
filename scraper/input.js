@@ -57,7 +57,6 @@ let interface = {
             return
         }
 
-        alert("scraping time!")
         chrome.runtime.sendMessage({ "type": "contents", "contents": files["excel"]["data"], "history": files["progress"]["data"], ...settings })
     },
 

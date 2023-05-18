@@ -1,4 +1,5 @@
 let getWait = (d) => new Promise(resolve => setTimeout(resolve, d))
+let getRandom = (low, high) => Math.floor(low + (Math.random() * (high - low)))
 
 let saveData = async (fileName, data) => await openReporter("download", { "name": fileName, "data": data })
 let alertBridge = async (str) => await openReporter("alert", { "alert": str })
@@ -103,10 +104,9 @@ let closerGen = (message, cFn) => new Promise((masterResolve, reject) => {
 
 let roam = async (contents, maxTabs, min, max, scrollSpeed, scrollStride) => {
 
-    let getRandom = (low, high) => Math.floor(low + (Math.random() * (high - low)))
     let currentlyRunning = {}
-
     let stop = false
+
     closerGen("Welcome back!", async () => {
         stop = true
 
@@ -161,8 +161,10 @@ let scrape = async (contents, success, maxTabs) => {
 
         contents = contents.filter(a => !success.some(b => a[0] == b))
         if (contents.length == 0) {
-            alertBridge("archive already up to data, nothing new to scrape!")
+            alertBridge("Archive is already up to data - nothing new to scrape!")
             return
+        } else {
+            alertBridge(`About to scrape ${contents.length}, ready?`)
         }
 
         console.log("Entries after: ", contents.length)
