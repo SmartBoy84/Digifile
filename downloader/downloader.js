@@ -92,36 +92,63 @@ let enableButton = (ele, cFn) => {
 window.addEventListener("DOMContentLoaded", async () => {
 
     console.log("loading...")
-    while (true) {
-        await getWait(50)
+    // while (true) {
+    //     await getWait(200)
 
-        if (document.querySelector("dataroom-layout")) {
-            console.log("not in a document")
-            return
-        }
+    //     if (document.querySelector("dataroom-layout")) {
+    //         console.log("not in a document")
+    //         return
+    //     }
 
-        let number = document.querySelector("#pageNumber")
-        let loadingPages = document.querySelectorAll(".loadingIcon")
+    //     let error = getError()
+    //     if (error) {
+    //         console.log("[warning] ", error)
+    //         break
+    //     }
+    //     let progress = document.querySelector("#loadingBar > .progress")
+    //     if (progress) {
+    //         if (progress.style.width == 100) {
+    //             break
+    //         }
+    //         console.log(`Width: ${progress.style.width}`)
+    //     }
+    // }
+    let error
+    try {
+        await new Promise((resolve, reject) => {
+            let progressBar
+            let observer = new MutationObserver((mutations, observer) => {
+                for (let mutation of mutations) {
+                    if (mutation.type === 'childList' && document.querySelector("dataroom-layout")) {
+                        reject("not in a document")
+                    }
+                    error = getError();
+                    if (error) {
+                        console.log("[warning] ", error);
+                        resolve()
+                    }
 
-        let error = getError()
-        if (error) {
-            console.log("[warning] ", error)
-            break
-        }
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                        if (!progressBar) {
+                            progressBar = document.querySelector("#loadingBar > .progress");
+                        }
 
-        if (number) {
-
-            let max = parseInt(number.getAttribute("max"))
-            if (max > 0 && loadingPages.length < max) { // the second case ensures that at least two pages have loaded! 
-                // The goal is to get as close as possible to when the printService is initialized, this still isn't sufficient
-
-                console.log(max, loadingPages.length)
-
-                await getWait(2000) // really hacky solution, but what can I do?
-                break
-            }
-        }
+                        if (progressBar && progressBar.style.width === '100%') {
+                            console.log(progressBar.style.width)
+                            observer.disconnect();
+                            resolve()
+                        }
+                    }
+                }
+            }).observe(document, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] }) // we want to watch for element additions and style changes
+        })
+    } catch (failError) {
+        console.log(`Failed to load: ${failError}`)
+        return
     }
+
+    let pageCount = document.querySelector("#pageNumber").getAttribute("max") // in case I ever need it, I previously used this as a hacky way to esure page had loaded
+    console.log(`Loaded ${pageCount} pages!`)
 
     // cater for scraper's demands, if present
     console.log("loaded, asking for my type")
@@ -137,7 +164,9 @@ window.addEventListener("DOMContentLoaded", async () => {
         if (response["type"] == "scraper") {
             console.log(response["name"])
 
-            let error = await saveFile(false, response["name"])
+            if (!error) { // so far so good?
+                error = await saveFile(false, response["name"])
+            }
 
             if (error) { // if a file wasn't able to be scraped then save a dummy file so I know of it
                 let placeholderPDF = new jsPDF()

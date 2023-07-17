@@ -164,7 +164,7 @@ let scrape = async (contents, success, maxTabs) => {
             alertBridge("Archive is already up to data - nothing new to scrape!")
             return
         } else {
-            alertBridge(`About to scrape ${contents.length}, ready?`)
+            await alertBridge(`About to scrape ${contents.length} files, ready?`)
         }
 
         console.log("Entries after: ", contents.length)
