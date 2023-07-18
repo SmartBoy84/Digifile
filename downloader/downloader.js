@@ -1,5 +1,45 @@
+let printer = () => {
+    document.getElementById("print").click()
+    chrome.runtime.sendMessage({ type: "print", printed: true }) // code will not reach here if printing fails (DOM tries to show alert box)
+}
+
 let getWait = (d) => new Promise(resolve => setTimeout(resolve, d))
-let printFile = () => document.getElementById("print").click()
+let printFile = async () => {
+
+    /*
+        I need to figure out a way to inject code to override the alert that shows when printing service isn't available
+        this would return a negative response and cause the script to continue to query for printing until it is available
+        tampermonkey can do it somehow
+    */
+
+    /*    
+    var actualCode = `alert('foo');`;
+            
+        var script = document.createElement('script');
+        script.textContent = actualCode;
+        (document.head||document.documentElement).appendChild(script);
+        alert("yo!")
+        alert("injected")
+    */
+
+    let status = false
+
+    while (!status) {
+        await getWait(200) // give it some time
+        printer()
+
+        await new Promise(resolve => {
+            chrome.runtime.onMessage.addListener(async request => {
+                if (request["type"] == "print") {
+                    status = request["printed"]
+                    resolve()
+                }
+            })
+        })
+    }
+
+    console.log("Successfully printed!")
+}
 
 let getError = () => {
 
@@ -37,7 +77,7 @@ let saveFile = async (newPage, pathName) => {
     let printService = document.querySelector("#printServiceOverlay")
     let finalPDF = new jsPDF()
 
-    let wait = new Promise((resolve, reject) => {
+    await new Promise(resolve => { // wait for page load
         new MutationObserver((mutations, observer) => {
             for (var mutation of mutations) {
 
@@ -52,8 +92,7 @@ let saveFile = async (newPage, pathName) => {
         }).observe(printService, { attributes: true })
     })
 
-    printFile()
-    await wait
+    await printFile() // wait for file to print
 
     let collection = document.querySelector("#printContainer").cloneNode(true)
     document.getElementById("printCancel").click()
@@ -90,34 +129,13 @@ let enableButton = (ele, cFn) => {
 }
 
 window.addEventListener("DOMContentLoaded", async () => {
+    let error
 
     console.log("loading...")
-    // while (true) {
-    //     await getWait(200)
-
-    //     if (document.querySelector("dataroom-layout")) {
-    //         console.log("not in a document")
-    //         return
-    //     }
-
-    //     let error = getError()
-    //     if (error) {
-    //         console.log("[warning] ", error)
-    //         break
-    //     }
-    //     let progress = document.querySelector("#loadingBar > .progress")
-    //     if (progress) {
-    //         if (progress.style.width == 100) {
-    //             break
-    //         }
-    //         console.log(`Width: ${progress.style.width}`)
-    //     }
-    // }
-    let error
     try {
         await new Promise((resolve, reject) => {
             let progressBar
-            let observer = new MutationObserver((mutations, observer) => {
+            new MutationObserver((mutations, observer) => {
                 for (let mutation of mutations) {
                     if (mutation.type === 'childList' && document.querySelector("dataroom-layout")) {
                         reject("not in a document")
@@ -148,7 +166,9 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
 
     let pageCount = document.querySelector("#pageNumber").getAttribute("max") // in case I ever need it, I previously used this as a hacky way to esure page had loaded
+    let delay = pageCount * 200 // ugh, I don't know man!
     console.log(`Loaded ${pageCount} pages!`)
+    await getWait(pageCount * 200)
 
     // cater for scraper's demands, if present
     console.log("loaded, asking for my type")
