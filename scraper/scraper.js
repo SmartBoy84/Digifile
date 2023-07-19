@@ -4,13 +4,21 @@ let getRandom = (low, high) => Math.floor(low + (Math.random() * (high - low)))
 let saveData = async (fileName, data) => await openReporter("download", { "name": fileName, "data": data })
 let alertBridge = async (str) => await openReporter("alert", { "alert": str })
 
-chrome.runtime.onMessage.addListener(async (request, sender, reply) => {
+let currentlyRunning = {}
 
+chrome.runtime.onMessage.addListener(async (request, sender, reply) => {
     // "maxPages": 3, // max number of concurrent pages
     // "minTime": 30, // min
     // "maxTime": 50, // min
     // "scrollAmount": 200, // px
     // "scrollSpeed": 200 // ms
+
+    if (request["type"] == "document") {
+        if (!currentlyRunning[sender.tab.id]) {
+            console.log("creating standard page context")
+            reply({ "type": "normal" })
+        }
+    }
 
     if (request["type"] == "contents") {
         console.log("max pages", request["maxPages"])
@@ -103,8 +111,6 @@ let closerGen = (message, cFn) => new Promise((masterResolve, reject) => {
 })
 
 let roam = async (contents, maxTabs, min, max, scrollSpeed, scrollStride) => {
-
-    let currentlyRunning = {}
     let stop = false
 
     closerGen("Welcome back!", async () => {
