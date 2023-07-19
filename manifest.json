@@ -6,8 +6,12 @@
 		"nativeMessaging",
 		"tabs",
 		"webRequest",
-		"downloads"
+		"downloads",
+		"scripting"
 	],
+	"host_permissions": [
+        "https://digify.com/*"
+    ],
 	"description": "attempt at breaking digify ig",
 	"content_scripts": [
 		{

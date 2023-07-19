@@ -1,3 +1,26 @@
+let override = `
+(function() {
+    window.alert = function(str) {
+        var data = { type: "alert_message", text: str };
+        window.postMessage(data, "*");
+    };
+
+    var _old_print = window.printPDF;
+    window.printPDF = function() {
+        let error = "."
+        let actual = console.error;
+        console.error = function(...args) {
+            error += args.join(" ")
+          };
+        _old_print()
+        var data = { type: "print", text: error };
+        window.postMessage(data, "*");
+
+        console.error = actual
+    };
+})();
+`
+
 let getWait = (d) => new Promise(resolve => setTimeout(resolve, d))
 let getRandom = (low, high) => Math.floor(low + (Math.random() * (high - low)))
 
@@ -14,8 +37,25 @@ chrome.runtime.onMessage.addListener(async (request, sender, reply) => {
     // "scrollSpeed": 200 // ms
 
     if (request["type"] == "document") {
+        console.log("Injecting alert hooker!")
+
+        chrome.scripting.executeScript({
+            target: { tabId: sender.tab.id },
+            func: code => {
+                console.log("Injecting alert hooker!")
+
+                const el = document.createElement('script');
+                el.textContent = code;
+                (document.head || document.documentElement).appendChild(el);
+                // el.remove();
+            },
+            args: [override],
+            world: 'MAIN',
+            injectImmediately: true, // Chrome 102+
+        })
+
         if (!currentlyRunning[sender.tab.id]) {
-            console.log("creating standard page context")
+            console.log("creating standard page context", currentlyRunning, sender.tab.id)
             reply({ "type": "normal" })
         }
     }
@@ -159,7 +199,6 @@ let roam = async (contents, maxTabs, min, max, scrollSpeed, scrollStride) => {
 let scrape = async (contents, success, maxTabs) => {
 
     // store states
-    let currentlyRunning = {}
     let failure = {}
 
     if (success) {
@@ -180,7 +219,6 @@ let scrape = async (contents, success, maxTabs) => {
     closerGen("Let me finish these final few documents, please - then I'll stop and generate a progress report :)", async () => stop = true)
 
     for (let i = 0; i < contents.length; i++) {
-
         // if more that the maxTabs are running at once then wait for one to finish before continuing
         if (Object.keys(currentlyRunning).length >= maxTabs) {
 
@@ -193,14 +231,20 @@ let scrape = async (contents, success, maxTabs) => {
         let name = contents[i][0]
         let url = contents[i][1]
 
-        console.log(name, url)
+        let tab = await chrome.tabs.create({ url: url })
+            .catch(e => {
+                console.log("Failed to create tab")
+                failure[name] = `failed to create tab: ${e}`
+            })
+
+        if (!tab) { continue }
+
+        let id = tab.id
 
         // jesus, javascript is funky - what the hell's the context here?! Even I don't get what I've written!
-        currentlyRunning[name] = new Promise(async (resolve, reject) => {
+        currentlyRunning[tab.id] = new Promise(async (resolve, reject) => {
             try {
-
-                let id = (await chrome.tabs.create({ url: url })).id
-                console.log("waiting for status request")
+                console.log("waiting for status request from", name, url, id)
 
                 await waitForResponse(id, (request, sender, reply) => {
                     if (request["type"] == "document") {
@@ -231,7 +275,7 @@ let scrape = async (contents, success, maxTabs) => {
 
                         console.log("finished with ", request["name"])
 
-                        delete currentlyRunning[request["name"]] // finished!
+                        delete currentlyRunning[id] // finished!
                         return true
                     }
                 })
@@ -243,10 +287,18 @@ let scrape = async (contents, success, maxTabs) => {
                 console.log("ERROR", error)
                 failure[name] = `failed to load tab, error: ${error}`
 
-                delete currentlyRunning[name] // finished!
+                delete currentlyRunning[id] // finished!
                 reject(error)
             }
         })
+
+        // chrome.tabs.create({ url: url }).then(tab => tab.id)
+        //     .then(id => {
+
+        //     }).catch(error => {
+        //         console.log("[WARNING] failed to create tab")
+        //         failure[name] = `failed to create tab ${e}`
+        //     })
     }
 
     console.log("waiting for all downloads to finish")

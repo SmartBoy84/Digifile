@@ -1,44 +1,8 @@
-/*
-    I need to figure out a way to inject code to override the alert that shows when printing service isn't available
-    this would return a negative response and cause the script to continue to query for printing until it is available
-    tampermonkey can do it somehow
-*/
-
-/*    
-var actualCode = `alert('foo');`;
-        
-    var script = document.createElement('script');
-    script.textContent = actualCode;
-    (document.head||document.documentElement).appendChild(script);
-    alert("yo!")
-    alert("injected")
-*/
-
-let printer = () => {
-    document.getElementById("print").click()
-    chrome.runtime.sendMessage({ type: "print", printed: true }) // code will not reach here if printing fails (DOM tries to show alert box)
+let magicStrings = {
+    print_errors: ["to be initialized"]
 }
 
 let getWait = (d) => new Promise(resolve => setTimeout(resolve, d))
-let printFile = async () => {
-    console.log("Printing...")
-
-    let status = false
-
-    while (!status) {
-        await getWait(200) // give it some time
-        printer()
-
-        await new Promise(resolve => {
-            chrome.runtime.onMessage.addListener(async request => {
-                if (request["type"] == "print") {
-                    status = request["printed"]
-                    resolve()
-                }
-            })
-        })
-    }
-}
 
 let getError = () => {
 
@@ -65,50 +29,109 @@ function urlContentToDataUri(url) {
         }));
 }
 
-let saveFile = async (newPage, pathName) => {
-    console.log("Downloading")
+let sendMessage = (data) => window.postMessage(data, "*");
 
-    /* await */ printFile() // print the file - don't wait for this, that's handled by the mutation observer
+// done this way to minimize the amount of injected code
+// I override the alert prompt to prevent it from stopping code
+window.addEventListener("message", function (event) {
+    if (event.data.type && (event.data.type == "alert_message")) {
+        let message = event.data.text
+        console.log(`[ALERT_OVERRIDE] ${message}`);
 
-    let printService = document.querySelector("#printServiceOverlay")
-
-    await new Promise(resolve => { // wait for page load
-        new MutationObserver((mutations, observer) => {
-            for (var mutation of mutations) {
-
-                if (mutation.type == "attributes" && printService.getAttribute("class").includes("hidden")) {
-                    console.log("finished rendering, stopping printer")
-
-                    observer.disconnect()
-                    resolve()
-                }
-            }
-        }).observe(printService, { attributes: true })
-    })
-
-    let collection = document.querySelector("#printContainer").cloneNode(true)
-    document.getElementById("printCancel").click() // so that the print dialog doesn't appear
-
-    // start PDF compilation
-    let finalPDF = new jsPDF()
-    let images = collection.querySelectorAll("img")
-
-    if (images.length == 0) {
-        return "empty document?"
-    }
-
-    for (let i = 0; i < images.length; i++) {
-        finalPDF.addImage(images[i], 'JPEG', 0, 0, 210, 297, '', 'FAST') // I have no clue what these magic values are - maybe I'll check them out?
-        if (i < images.length - 1) {
-            await finalPDF.addPage() // so that a blank page isn't added at the end
+        if (message == "print") {
+            renderFile()
         }
     }
+})
 
-    if (newPage) {
-        window.open(URL.createObjectURL(finalPDF.output("blob")), "_self")
-    }
-    else {
-        finalPDF.save(pathName)
+function renderFile() {
+    return new Promise(async (masterResolve, masterReject) => {
+        console.log("rendering routine initialised")
+
+        let status = false
+
+        while (!status) {
+            document.getElementById("print").click() // start printing
+
+            let error = getError();
+            if (error) {
+                console.log(error) // -> saveFile -> mainRoutine -> downloader.js -> saved into file
+                masterReject(error)
+                return
+            }
+
+            await new Promise(resolve =>
+                window.addEventListener("message", function (event) {
+                    if (event.data.type && (event.data.type == "print")) {
+                        status = event.data.text && !magicStrings.print_errors.some(error_str => event.data.text.includes(error_str))
+                        console.log(`Response: ${event.data.text}`, status)
+                        resolve()
+                    }
+                })
+            )
+
+            await getWait(200) // give it some time before going at it again
+        }
+
+        console.log("waiting for renderer")
+        let printService = document.querySelector("#printServiceOverlay")
+
+        await new Promise(resolve => { // step 2 - wait for page load
+            new MutationObserver((mutations, observer) => {
+                for (var mutation of mutations) {
+
+                    if (mutation.type == "attributes" && printService.getAttribute("class").includes("hidden")) {
+                        observer.disconnect()
+                        resolve()
+                    }
+                }
+            }).observe(printService, { attributes: true })
+        })
+
+        let collection = document.querySelector("#printContainer").cloneNode(true)
+        document.getElementById("printCancel").click() // so that the print dialog doesn't appear
+
+        console.log("renderer finished")
+        masterResolve(collection)
+    })
+}
+
+let printer = async () => {
+    console.log("Printing...")
+    document.getElementById("print").click() // start printing
+}
+
+let saveFile = async (newPage, pathName) => {
+    try {
+        console.log("Downloading")
+
+        // render file
+        let collection = await (renderFile())
+
+        // start PDF compilation
+        let finalPDF = new jsPDF()
+        let images = collection.querySelectorAll("img")
+
+        if (images.length == 0) {
+            throw "empty document?"
+        }
+
+        for (let i = 0; i < images.length; i++) {
+            finalPDF.addImage(images[i], 'JPEG', 0, 0, 210, 297, '', 'FAST') // I have no clue what these magic values are - maybe I'll check them out?
+            if (i < images.length - 1) {
+                await finalPDF.addPage() // so that a blank page isn't added at the end
+            }
+        }
+
+        if (newPage) {
+            window.open(URL.createObjectURL(finalPDF.output("blob")), "_self")
+        }
+        else {
+            finalPDF.save(pathName)
+        }
+    } catch (error) {
+        console.log(`Error saving file: ${error}`)
+        return error
     }
 }
 
@@ -126,64 +149,52 @@ window.addEventListener("DOMContentLoaded", async () => {
     let error
 
     console.log("loading...")
-    try {
-        await new Promise((resolve, reject) => {
-            let progressBar
-            new MutationObserver((mutations, observer) => {
-                for (let mutation of mutations) {
-                    if (mutation.type === 'childList' && document.querySelector("dataroom-layout")) {
-                        reject("not in a document")
+    await new Promise((resolve, reject) => {
+        let progressBar
+
+        new MutationObserver((mutations, observer) => {
+            for (let mutation of mutations) {
+
+                if (mutation.type === 'childList' && document.querySelector("dataroom-layout")) {
+                    reject("not in a document")
+                }
+
+                let pageError = getError();
+                if (pageError) {
+                    reject(pageError)
+                }
+
+                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                    if (!progressBar) {
+                        progressBar = document.querySelector("#loadingBar > .progress");
                     }
-                    let pageError = getError();
-                    if (pageError) {
-                        reject(pageError)
-                        return
-                    }
-                    if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-                        if (!progressBar) {
-                            progressBar = document.querySelector("#loadingBar > .progress");
-                        }
-                        else if (progressBar.style.width === '100%') {
-                            console.log(progressBar.style.width)
-                            observer.disconnect();
-                            resolve()
-                        }
+                    else if (progressBar.style.width === '100%') {
+                        console.log(progressBar.style.width)
+                        observer.disconnect();
+                        resolve()
                     }
                 }
-            }).observe(document, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] }) // we want to watch for element additions and style changes
-        })
-    } catch (failError) {
-        console.log(`Failed to load: ${failError}`)
+            }
+        }).observe(document, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] }) // we want to watch for element additions and style changes
+    }).catch(failError => {
         error = failError
-        return
-    }
-
-    // enable download buttons
-    let fileName = document.querySelector(".viewer-file-name").innerHTML.replace(/\.[^/.]+$/, ".pdf")
-
-    let buttons = document.querySelectorAll(".toolbarButton")
-    buttons.forEach(ele => {
-        switch (ele.getAttribute("tabindex")) {
-            case "22":
-                enableButton(ele, () => saveFile(true, fileName))
-                break;
-
-            case "23":
-                enableButton(ele, () => saveFile(false, fileName))
-                break;
-        }
     })
 
-    // necessary delay - FIX ME!
-    let pageCount = document.querySelector("#pageNumber").getAttribute("max") // in case I ever need it, I previously used this as a hacky way to esure page had loaded
-    console.log(`Loaded ${pageCount} pages!`)
-    await getWait(pageCount * 200) // ugh, I don't know man!
+    // necessary delay - FIX ME - FIXEDDD!!!
+    // let pageCount = document.querySelector("#pageNumber").getAttribute("max") // in case I ever need it, I previously used this as a hacky way to esure page had loaded
+    // console.log(`Loaded ${pageCount} pages!`)
+    // await getWait(pageCount * 200) // ugh, I don't know man!
 
     // cater for scraper's demands, if present
     console.log("loaded, asking for my type")
-    let response = await chrome.runtime.sendMessage({ "type": "document" }) // if there is no reply, then this is a normal document
 
-    let type = response ? response["type"] : "normal"
+    let response = await chrome.runtime.sendMessage({ "type": "document" }) // if there is no reply, then this is a normal document
+    if (!response) {
+        console.log("[ERROR] Backend failed to respond")
+        return
+    }
+
+    let type = response ? response["type"] : "no response"
     console.log("My type is:", type)
 
     // carry out backend's requests
@@ -235,4 +246,20 @@ window.addEventListener("DOMContentLoaded", async () => {
             }
         }
     }
+
+    // enable download buttons
+    let fileName = document.querySelector(".viewer-file-name").innerHTML.replace(/\.[^/.]+$/, ".pdf")
+
+    let buttons = document.querySelectorAll(".toolbarButton")
+    buttons.forEach(ele => {
+        switch (ele.getAttribute("tabindex")) {
+            case "22":
+                enableButton(ele, () => saveFile(true, fileName))
+                break;
+
+            case "23":
+                enableButton(ele, () => saveFile(false, fileName))
+                break;
+        }
+    })
 })
