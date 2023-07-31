@@ -9,3 +9,15 @@ Disadvantages of this method are that it requires manual scrolling and waiting f
 User interaction could be blocked by using the build in download prompt or making your own.
 
 Inspiration: `https://chrome.google.com/webstore/detail/canvas-downloader-find-an/dgfcgcafnnbdpojemnkiiilnnghebgja`
+
+Most of the code will be unaffected, primarily I just need to replace the print() function with my own implementation
+
+start of slider is infinite zoom (9999)
+default 1.5
+max is 5
+
+# zoom
+if 0 then zoom = 9999
+
+document.getElementById("scaleSelect").value = zoom (float (0,5])
+document.getElementById("scaleSelect").dispatchEvent(new Event('change'))

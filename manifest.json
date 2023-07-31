@@ -10,8 +10,8 @@
 		"scripting"
 	],
 	"host_permissions": [
-        "https://digify.com/*"
-    ],
+		"https://digify.com/*"
+	],
 	"description": "attempt at breaking digify ig",
 	"content_scripts": [
 		{
@@ -26,7 +26,7 @@
 		}
 	],
 	"action": {
-		"default_popup": "scraper/input.html"
+		"default_popup": "input/input.html"
 	},
 	"background": {
 		"service_worker": "scraper/scraper.js"

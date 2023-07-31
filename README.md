@@ -1,5 +1,5 @@
 ## It was a good run, I suppose - Digify seems to have patched this method of file downloading :(
-I have another trick, but won't happen any time soon
+I have another trick, but won't happen any time soon (under dev)
 
 # Digifile
 Chrome extension to enable download/preview buttons (i.e., digify scraper)
@@ -15,12 +15,15 @@ Chrome extension to enable download/preview buttons (i.e., digify scraper)
 - `print` - opens file as pdf in same window
 - `download` - downloads file  
 ### Extension options
-- `Concurrent pages` - allows for setting max number of pages which should be open at any one time. Keep this low to prevent crashes   
-- `Max/min` - sets the range the `roamer` should wait on each document (default is 30-50 minutes)
+- `Pause button` - extension gracefully pauses scraping and saves `progress.txt` and `errors.txt`
+- `Concurrent pages` - allows for setting max number of pages which should be open at any one time. Keep this low to prevent crashes
+#### Scraper
+-  `Resolution` - basically controls the zoom of the page when "screenshotting"; default is very high res already
+#### Roamer
+>This was added so that digify reports me having been on it (evades suspicion)
 - `Scroll speed` - time to wait before moving to next page, prevent digify confirmation dialog from showing
 - `Scroll stride` - number of pixels to scroll by
-- `Pause button` - extension gracefully pauses scraping and saves `progress.txt` and `errors.txt`
-- `Roam` - I added this so that digify reports me having been on it (evades suspicion)
+- `Max/min` - sets the range the `roamer` should wait on each document (default is 30-50 minutes)
 
 ## Utilities
 ### `fixup {download_dir}`
