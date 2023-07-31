@@ -1,3 +1,6 @@
+## It was a good run, I suppose - Digify seems to have patched this method of file downloading :(
+I have another trick, but won't happen any time soon
+
 # Digifile
 Chrome extension to enable download/preview buttons (i.e., digify scraper)
 

@@ -117,7 +117,10 @@ let saveFile = async (newPage, pathName) => {
         }
 
         for (let i = 0; i < images.length; i++) {
-            finalPDF.addImage(images[i], 'JPEG', 0, 0, 210, 297, '', 'FAST') // I have no clue what these magic values are - maybe I'll check them out?
+            // to be done, make the dimensions more dynamic by using the width given in their attributes to allow for different widths as well
+            // these dimensions may be unimportant though since I swear I've seen landscape pages
+            finalPDF.addImage(images[i], 'JPEG', 0, 0, 210, 297, '', 'FAST') // (data, format, offset_x, offset_y, width, height, compression) -> width and height are that of a typical A4 sheet
+
             if (i < images.length - 1) {
                 await finalPDF.addPage() // so that a blank page isn't added at the end
             }
@@ -179,11 +182,6 @@ window.addEventListener("DOMContentLoaded", async () => {
     }).catch(failError => {
         error = failError
     })
-
-    // necessary delay - FIX ME - FIXEDDD!!!
-    // let pageCount = document.querySelector("#pageNumber").getAttribute("max") // in case I ever need it, I previously used this as a hacky way to esure page had loaded
-    // console.log(`Loaded ${pageCount} pages!`)
-    // await getWait(pageCount * 200) // ugh, I don't know man!
 
     // cater for scraper's demands, if present
     console.log("loaded, asking for my type")
