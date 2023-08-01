@@ -1,4 +1,4 @@
-let debugFn = () => {
+let debugFn = {
     hello: () => console.log("Hello world!")
 }
 
@@ -13,50 +13,26 @@ window.addEventListener("message", function (event) {
     }
 })
 
-let enableButton = (ele, cFn) => {
-
-    let clone = ele.cloneNode(true)
-
-    clone.removeAttribute("disabled")
-    clone.addEventListener("click", () => cFn())
-
-    ele.parentNode.replaceChild(clone, ele)
-}
-
 window.addEventListener("DOMContentLoaded", async () => {
     let error
 
     console.log("loading...")
-    await new Promise((resolve, reject) => {
-        let progressBar
+    let progressBar
+    while (true) { // I tried a mutationserver - it didn't work for some reason
+        await getWait(200)
 
-        new MutationObserver((mutations, observer) => {
-            for (let mutation of mutations) {
+        if (error = getError()) {
+            break
+        }
 
-                if (mutation.type === 'childList' && document.querySelector("dataroom-layout")) {
-                    reject("not in a document")
-                }
-
-                let pageError = getError();
-                if (pageError) {
-                    reject(pageError)
-                }
-
-                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-                    if (!progressBar) {
-                        progressBar = document.querySelector("#loadingBar > .progress");
-                    }
-                    else if (progressBar.style.width === '100%') {
-                        console.log(progressBar.style.width)
-                        resolve()
-                        observer.disconnect();
-                    }
-                }
-            }
-        }).observe(document, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] }) // we want to watch for element additions and style changes
-    }).catch(failError => {
-        error = failError
-    })
+        if (!progressBar) {
+            progressBar = document.querySelector("#loadingBar > .progress");
+        }
+        else if (progressBar.style.width === '100%') {
+            console.log(progressBar.style.width)
+            break
+        }
+    }
 
     // cater for scraper's demands, if present
     console.log("loaded, asking for my type")
@@ -79,7 +55,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
         if (!error) { // so far so good?
             console.log("Downloading file")
-            error = await saveFile(false, response["name"], resolution)
+            error = await saveFile(false, response["name"], response["resolution"])
         }
 
         if (error) { // if a file wasn't able to be scraped then save a dummy file so I know of it
@@ -95,7 +71,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     if (type == "traveller") {
         await traveller(response.scrollStride, response.scrollSpeed, response.time)
-        // window.close() // we're back - goodbye!
+        window.close() // we're back - goodbye!
     }
 
     // enable download buttons

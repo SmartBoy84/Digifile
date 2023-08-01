@@ -22,7 +22,6 @@ let renderFile = (resolution) =>
         let setPage = (n) => {
             pgNumber.value = n
             pgNumber.dispatchEvent(new Event('change'))
-
         }
 
         let pageContainer = document.querySelectorAll(".pdfViewer > .page")
@@ -30,7 +29,6 @@ let renderFile = (resolution) =>
             masterReject("Mismatching pagecounts")
             return
         }
-        console.log(pageContainer)
 
         for (let pageIndex = 0; pageIndex < pageCount; pageIndex++) {
             setPage(pageIndex + 1)
@@ -74,17 +72,11 @@ let renderFile = (resolution) =>
 
             collection.push(pageCanvas.toDataURL("image/png"))
         }
-
         console.log("rendering routine finished")
 
         masterResolve(collection)
         return
     })
-
-let printer = async () => {
-    console.log("Printing...")
-    document.getElementById("print").click() // start printing
-}
 
 let saveFile = async (newPage, pathName, resolution) => {
     try {
@@ -92,7 +84,6 @@ let saveFile = async (newPage, pathName, resolution) => {
 
         // render file
         let collection = await (renderFile(resolution))
-        console.log(collection)
 
         // start PDF compilation
         let finalPDF = new jsPDF()

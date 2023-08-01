@@ -2,6 +2,10 @@ let getWait = (d) => new Promise(resolve => setTimeout(resolve, d))
 
 let getError = () => {
 
+    if (document.querySelector(".page-container")) {
+        return "not in a document"
+    }
+
     let pass = document.querySelector("#passwordOverlay")
     if (pass && !pass.getAttribute("class").includes("hidden")) {
         return "document locked"
@@ -25,9 +29,19 @@ function urlContentToDataUri(url) {
         }));
 }
 
+let enableButton = (ele, cFn) => {
+
+    let clone = ele.cloneNode(true)
+
+    clone.removeAttribute("disabled")
+    clone.addEventListener("click", () => cFn())
+
+    ele.parentNode.replaceChild(clone, ele)
+}
+
 let sendMessage = (data) => window.postMessage(data, "*");
 
-let traveller = async (scrollStride, scrollSpeed, time) => {
+let traveller = (scrollStride, scrollSpeed, time) => new Promise(async (resolve, reject) => {
     let max = parseInt(document.getElementById("viewer").offsetHeight)
     let intervals = Math.floor(time / scrollSpeed)
     let viewer = document.getElementById("viewerContainer")
@@ -50,4 +64,5 @@ let traveller = async (scrollStride, scrollSpeed, time) => {
             }
         }
     }
-}
+    resolve()
+})
