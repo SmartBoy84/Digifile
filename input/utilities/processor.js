@@ -5,25 +5,6 @@ let setUpdater = (type, event) => document.querySelectorAll(`.${type}`)
         )
     )
 
-// setup
-setUpdater("button", "click")
-setUpdater("fileInput", "input")
-setUpdater("slider", "input")
-
-document.querySelectorAll(".setting")
-    .forEach(setting => {
-        let name = setting.dataset.type
-
-        setting.addEventListener("input", async (e) =>
-            settings[e.target.dataset.type] = parseFloat(e.target.value)
-        )
-
-        setting.value = settings[name]
-        setting.dataset.default = settings[name]
-
-        setting.dispatchEvent(new Event('input'));
-    })
-
 let readAsString = (file) =>
     new Promise((resolve, reject) => {
 

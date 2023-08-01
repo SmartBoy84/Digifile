@@ -49,7 +49,9 @@ let closerGen = (message, cFn) => new Promise((masterResolve, reject) => {
         if (request["type"] == "stop") {
 
             console.log("stopping...")
-            alertBridge(message)
+            if (message) {
+                alertBridge(message)
+            }
 
             chrome.runtime.onMessage.removeListener(arguments.callee)
 

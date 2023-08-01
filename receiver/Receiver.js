@@ -51,15 +51,14 @@ window.addEventListener("DOMContentLoaded", async () => {
     document.dispatchEvent(event)
 
     if (type == "scraper") {
-        console.log(response["name"])
 
         if (!error) { // so far so good?
-            console.log("Downloading file")
+            console.log(`Downloading file: ${response["name"]} at scalar res: ${response["resolution"]}`)
             error = await saveFile(false, response["name"], response["resolution"])
         }
-
-        if (error) { // if a file wasn't able to be scraped then save a dummy file so I know of it
+        else { // if a file wasn't able to be scraped then save a dummy file so I know of it
             console.log("[WARNING]", error)
+
             let placeholderPDF = new jsPDF()
             await placeholderPDF.text(error, 10, 10)
             await placeholderPDF.save(response["name"])

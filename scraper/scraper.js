@@ -1,5 +1,5 @@
 try {
-    importScripts('./helpers.js', './runners.js');
+    importScripts('./utilities/runners.js', './utilities/helpers.js');
 } catch (e) {
     console.error(e);
 }

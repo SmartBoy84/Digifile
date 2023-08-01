@@ -19,10 +19,10 @@
 				"https://digify.com/*"
 			],
 			"js": [
-				"downloader/receiver.js",
-				"downloader/helper.js",
-				"downloader/snapper.js",
-				"downloader/jspdf.min.js"
+				"receiver/Receiver.js",
+				"receiver/utilities/helper.js",
+				"receiver/utilities/snapper.js",
+				"receiver/utilities/jspdf.min.js"
 			],
 			"run_at": "document_start"
 		}
@@ -31,6 +31,6 @@
 		"default_popup": "input/input.html"
 	},
 	"background": {
-		"service_worker": "scraper/scraper.js"
+		"service_worker": "scraper/Scraper.js"
 	}
 }

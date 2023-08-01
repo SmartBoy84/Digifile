@@ -20,7 +20,10 @@ let scrape = async (contents, success, maxTabs, resolution) => {
     }
 
     let stop = false
-    closerGen("Let me finish these final few documents, please - then I'll stop and generate a progress report :)", async () => stop = true)
+    closerGen(null, async () => { // where does this run? The great Hamdan chasm (look into it, pretty cool how it works)
+        stop = true // I can't just return else errors.txt (if built) won't be downloaded
+        Object.keys(currentlyRunning).forEach(runningTabId => chrome.tabs.remove(parseInt(runningTabId), null).catch((e) => null))
+    })
 
     for (let i = 0; i < contents.length; i++) {
         // if more that the maxTabs are running at once then wait for one to finish before continuing
@@ -53,7 +56,7 @@ let scrape = async (contents, success, maxTabs, resolution) => {
                 await waitForResponse(id, (request, sender, reply) => {
                     if (request["type"] == "document") {
 
-                        reply({ "type": "scraper", "name": name })
+                        reply({ "type": "scraper", "name": name, resolution })
                         return true
                     }
                     return false
@@ -95,14 +98,6 @@ let scrape = async (contents, success, maxTabs, resolution) => {
                 reject(error)
             }
         })
-
-        // chrome.tabs.create({ url: url }).then(tab => tab.id)
-        //     .then(id => {
-
-        //     }).catch(error => {
-        //         console.log("[WARNING] failed to create tab")
-        //         failure[name] = `failed to create tab ${e}`
-        //     })
     }
 
     console.log("waiting for all downloads to finish")
@@ -117,6 +112,8 @@ let scrape = async (contents, success, maxTabs, resolution) => {
     }
 
     console.log("WE FINISHED BOI!")
+    await alertBridge("Dundo!")
+
     chrome.runtime.reload() // much easier this way
 }
 
