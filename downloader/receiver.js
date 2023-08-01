@@ -1,0 +1,116 @@
+let debugFn = () => {
+    hello: () => console.log("Hello world!")
+}
+
+// done this way to minimize the amount of injected code
+// I override the alert prompt to prevent it from stopping code
+window.addEventListener("message", function (event) {
+    if (event.data.type && (event.data.type == "alert_message")) {
+        let message = event.data.text
+        console.log(`[ALERT_OVERRIDE] ${message}`);
+
+        Object.keys(debugFn).includes(message) && debugFn[message]()
+    }
+})
+
+let enableButton = (ele, cFn) => {
+
+    let clone = ele.cloneNode(true)
+
+    clone.removeAttribute("disabled")
+    clone.addEventListener("click", () => cFn())
+
+    ele.parentNode.replaceChild(clone, ele)
+}
+
+window.addEventListener("DOMContentLoaded", async () => {
+    let error
+
+    console.log("loading...")
+    await new Promise((resolve, reject) => {
+        let progressBar
+
+        new MutationObserver((mutations, observer) => {
+            for (let mutation of mutations) {
+
+                if (mutation.type === 'childList' && document.querySelector("dataroom-layout")) {
+                    reject("not in a document")
+                }
+
+                let pageError = getError();
+                if (pageError) {
+                    reject(pageError)
+                }
+
+                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                    if (!progressBar) {
+                        progressBar = document.querySelector("#loadingBar > .progress");
+                    }
+                    else if (progressBar.style.width === '100%') {
+                        console.log(progressBar.style.width)
+                        resolve()
+                        observer.disconnect();
+                    }
+                }
+            }
+        }).observe(document, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] }) // we want to watch for element additions and style changes
+    }).catch(failError => {
+        error = failError
+    })
+
+    // cater for scraper's demands, if present
+    console.log("loaded, asking for my type")
+
+    let response = await chrome.runtime.sendMessage({ "type": "document" }) // if there is no reply, then this is a normal document
+    if (!response) {
+        console.log("[ERROR] Backend failed to respond")
+        return
+    }
+
+    let type = response ? response["type"] : "no response"
+    console.log("My type is:", type)
+
+    // carry out backend's requests
+    var event = new CustomEvent("beforeprint")
+    document.dispatchEvent(event)
+
+    if (type == "scraper") {
+        console.log(response["name"])
+
+        if (!error) { // so far so good?
+            console.log("Downloading file")
+            error = await saveFile(false, response["name"], resolution)
+        }
+
+        if (error) { // if a file wasn't able to be scraped then save a dummy file so I know of it
+            console.log("[WARNING]", error)
+            let placeholderPDF = new jsPDF()
+            await placeholderPDF.text(error, 10, 10)
+            await placeholderPDF.save(response["name"])
+        }
+
+        await chrome.runtime.sendMessage({ "type": "error", "name": response["name"], "error": error ? error : "" })
+        window.close() // finitooo!
+    }
+
+    if (type == "traveller") {
+        await traveller(response.scrollStride, response.scrollSpeed, response.time)
+        // window.close() // we're back - goodbye!
+    }
+
+    // enable download buttons
+    let fileName = document.querySelector(".viewer-file-name").innerHTML.replace(/\.[^/.]+$/, ".pdf")
+
+    let buttons = document.querySelectorAll(".toolbarButton")
+    buttons.forEach(ele => {
+        switch (ele.getAttribute("tabindex")) {
+            case "22":
+                enableButton(ele, () => saveFile(true, fileName, 0))
+                break;
+
+            case "23":
+                enableButton(ele, () => saveFile(false, fileName, 0))
+                break;
+        }
+    })
+})

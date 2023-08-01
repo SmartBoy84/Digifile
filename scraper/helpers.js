@@ -81,3 +81,22 @@ let openReporter = async (type, data) => {
         console.log(error)
     }
 }
+
+let injectCode = (hook, tabId) => {
+    console.log("Injecting code!")
+
+    chrome.scripting.executeScript({
+        target: { tabId },
+        func: code => {
+            console.log("Injecting alert hooker!")
+
+            const el = document.createElement('script');
+            el.textContent = code;
+            (document.head || document.documentElement).appendChild(el);
+            // el.remove();
+        },
+        args: [hook],
+        world: 'MAIN',
+        injectImmediately: true, // Chrome 102+
+    })
+} 

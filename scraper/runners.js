@@ -1,6 +1,6 @@
 let currentlyRunning = {}
 
-let scrape = async (contents, success, maxTabs) => {
+let scrape = async (contents, success, maxTabs, resolution) => {
 
     // store states
     let failure = {}

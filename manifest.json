@@ -19,7 +19,9 @@
 				"https://digify.com/*"
 			],
 			"js": [
-				"downloader/downloader.js",
+				"downloader/receiver.js",
+				"downloader/helper.js",
+				"downloader/snapper.js",
 				"downloader/jspdf.min.js"
 			],
 			"run_at": "document_start"

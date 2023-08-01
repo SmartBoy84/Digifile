@@ -51,13 +51,13 @@ let interface = {
                 return
             }
 
-            if (!files["excel"]["data"]) {
+            if (!interface["excel"]["data"]) {
                 alert("please provide excel file listing")
                 return
             }
 
             alert("Starting traveller, happy studying!")
-            chrome.runtime.sendMessage({ "type": "roam", "contents": files["excel"]["data"], ...settings })
+            chrome.runtime.sendMessage({ "type": "roam", "contents": interface["excel"]["data"], ...settings })
         }
     },
 
