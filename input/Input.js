@@ -1,5 +1,6 @@
 let settings = {
-    "maxPages": 3, // max number of concurrent pages
+    "maxConcurrentPages": 3, // max number of concurrent pages
+    "maxPageCount": 50,
     "minTime": 30, // min
     "maxTime": 50, // min
     "scrollSpeed": 5, // seconds
@@ -26,8 +27,8 @@ let interface = {
                 return
             }
 
-            if (settings["maxPages"] == 0) {
-                alert("please specify max concurrent tabs to open!")
+            if (settings["maxConcurrentPages"] == 0) {
+                alert("please specify max concurrent/bottleneck count tabs to open!")
                 return
             }
 
@@ -46,7 +47,7 @@ let interface = {
                 return
             }
 
-            if (!settings["maxPages"]) {
+            if (!settings["maxConcurrentPages"]) {
                 alert("please specify max concurrent tabs to open!")
                 return
             }

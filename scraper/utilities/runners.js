@@ -1,6 +1,6 @@
 let currentlyRunning = {}
 
-let scrape = async (contents, success, maxTabs, resolution) => {
+let scrape = async (contents, success, maxConcurrentPages, maxPageCount, resolution) => {
 
     // store states
     let failure = {}
@@ -22,12 +22,15 @@ let scrape = async (contents, success, maxTabs, resolution) => {
     let stop = false
     closerGen(null, async () => { // where does this run? The great Hamdan chasm (look into it, pretty cool how it works)
         stop = true // I can't just return else errors.txt (if built) won't be downloaded
-        Object.keys(currentlyRunning).forEach(runningTabId => chrome.tabs.remove(parseInt(runningTabId), null).catch((e) => null))
+        Object.keys(currentlyRunning).forEach(runningTabId => {
+            delete currentlyRunning[runningTabId]
+            chrome.tabs.remove(parseInt(runningTabId), null).catch((e) => null)
+        })
     })
 
     for (let i = 0; i < contents.length; i++) {
         // if more that the maxTabs are running at once then wait for one to finish before continuing
-        if (Object.keys(currentlyRunning).length >= maxTabs) {
+        if (Object.keys(currentlyRunning).length >= maxConcurrentPages) {
 
             console.log("Reached capacity! Waiting for one to finish...")
             await Promise.race(Object.values(currentlyRunning)).catch(e => null)
@@ -56,7 +59,7 @@ let scrape = async (contents, success, maxTabs, resolution) => {
                 await waitForResponse(id, (request, sender, reply) => {
                     if (request["type"] == "document") {
 
-                        reply({ "type": "scraper", "name": name, resolution })
+                        reply({ "type": "scraper", "name": name, resolution, maxPageCount })
                         return true
                     }
                     return false
@@ -70,13 +73,12 @@ let scrape = async (contents, success, maxTabs, resolution) => {
                         console.log("got reply from", request["name"])
 
                         if (request["type"] == "error") {
-
                             if (request["error"] && request["error"].length > 0) {
+
                                 failure[request["name"]] = request["error"]
                                 console.log("error from backend: ", request["error"])
 
                                 reply({ "received": true })
-
                             }
                         }
 
@@ -90,12 +92,16 @@ let scrape = async (contents, success, maxTabs, resolution) => {
                 resolve()
 
             } catch (error) {
+                if (currentlyRunning[id]) { // do I still exist?
 
-                console.log("ERROR", error)
-                failure[name] = `failed to load tab, error: ${error}`
+                    console.log("ERROR", error)
+                    failure[name] = `failed to load tab, error: ${error}`
 
-                delete currentlyRunning[id] // finished!
-                reject(error)
+                    delete currentlyRunning[id] // finished!
+                    reject(error)
+                }
+
+                resolve()
             }
         })
     }
@@ -103,12 +109,9 @@ let scrape = async (contents, success, maxTabs, resolution) => {
     console.log("waiting for all downloads to finish")
     await Promise.allSettled(Object.values(currentlyRunning)).catch() // ignore errors, even if all were rejected
 
-    console.log(failure)
-
-    if (Object.keys(failure) > 0) {
-        await Promise.allSettled([
-            saveData("errors.txt", JSON.stringify(failure))
-        ])
+    if (Object.keys(failure).length > 0) {
+        console.log(failure)
+        await saveData("errors.txt", JSON.stringify(failure))
     }
 
     console.log("WE FINISHED BOI!")

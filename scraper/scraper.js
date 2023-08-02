@@ -31,13 +31,13 @@ chrome.runtime.onMessage.addListener(async (request, sender, reply) => {
     }
 
     if (request["type"] == "contents") {
-        console.log("max pages", request["maxPages"])
+        console.log("max pages", request["maxConcurrentPages"])
         console.log(request)
-        scrape(request["contents"], request["history"], request["maxPages"], request["resolution"])
+        scrape(request["contents"], request["history"], request["maxConcurrentPages"], request["maxPageCount"], request["resolution"])
     }
 
     if (request["type"] == "roam") {
         console.log(request)
-        roam(request["contents"], request["maxPages"], request["minTime"], request["maxTime"], request["scrollSpeed"], request["scrollStride"])
+        roam(request["contents"], request["maxConcurrentPages"], request["minTime"], request["maxTime"], request["scrollSpeed"], request["scrollStride"])
     }
 })

@@ -34,6 +34,8 @@ window.addEventListener("DOMContentLoaded", async () => {
         }
     }
 
+    let pageCount = document.getElementById("pageNumber").getAttribute("max")
+
     // cater for scraper's demands, if present
     console.log("loaded, asking for my type")
 
@@ -51,17 +53,21 @@ window.addEventListener("DOMContentLoaded", async () => {
     document.dispatchEvent(event)
 
     if (type == "scraper") {
-
-        if (!error) { // so far so good?
-            console.log(`Downloading file: ${response["name"]} at scalar res: ${response["resolution"]}`)
-            error = await saveFile(false, response["name"], response["resolution"])
+        if (pageCount > response["maxPageCount"]) {
+            error = error ? error : `page count [${response["maxPageCount"]}] exceeded`
         }
-        else { // if a file wasn't able to be scraped then save a dummy file so I know of it
-            console.log("[WARNING]", error)
+        else {
+            if (!error) { // so far so good?
+                console.log(`Downloading file: ${response["name"]} at scalar res: ${response["resolution"]}`)
+                error = await saveFile(false, response["name"], response["resolution"])
+            }
+            else { // if a file wasn't able to be scraped then save a dummy file so I know of it
+                console.log("[WARNING]", error)
 
-            let placeholderPDF = new jsPDF()
-            await placeholderPDF.text(error, 10, 10)
-            await placeholderPDF.save(response["name"])
+                let placeholderPDF = new jsPDF()
+                await placeholderPDF.text(error, 10, 10)
+                await placeholderPDF.save(response["name"])
+            }
         }
 
         await chrome.runtime.sendMessage({ "type": "error", "name": response["name"], "error": error ? error : "" })

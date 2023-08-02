@@ -16,6 +16,7 @@ Chrome extension to enable download/preview buttons (i.e., digify scraper)
 - `Concurrent pages` - allows for setting max number of pages which should be open at any one time. Keep this low to prevent crashes
 #### Scraper
 -  `Resolution` - basically controls the zoom of the page when "screenshotting"; default is very high res already (set to 0 for max)
+-   `Max page count` - Max allowed page count (high page counts can cause excessive stalling/crashes due to ram limitations)
 #### Roamer
 >This was added so that digify reports me having been on it (evades suspicion)
 - `Scroll speed` - time to wait before moving to next page, prevent digify confirmation dialog from showing

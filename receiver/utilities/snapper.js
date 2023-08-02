@@ -1,3 +1,12 @@
+let getObserver = (page, cFn) => new Promise(resolve => {
+    new MutationObserver((mutations, observer) => {
+        if (cFn(mutations)) {
+            observer.disconnect();
+            resolve()
+        }
+    }).observe(page, { childList: true, subtree: true }) // we want to watch for element additions and style changes
+})
+
 let renderFile = (resolution) =>
     new Promise(async (masterResolve, masterReject) => {
         console.log("Rendering")
@@ -36,34 +45,19 @@ let renderFile = (resolution) =>
             let page = pageContainer[pageIndex]
 
             // wait for page to load
-            if (page.querySelector(".loadingIcon") || !document.querySelector(".canvasWrapper")) {
-                console.log("waiting for page to load")
+            console.log("waiting for page to load")
 
-                await Promise.all([
+            await Promise.all([
+                // wait for canvas to appear
+                page.querySelector(".canvasWrapper") ? null : getObserver(page,
+                    () => document.querySelector(".canvasWrapper")
+                ),
 
-                    // wait for canvas to appear
-                    document.querySelector(".canvasWrapper") ? null : new Promise((resolve, reject) => {
-                        new MutationObserver((mutations, observer) => {
-                            if (document.querySelector(".canvasWrapper")) {
-                                observer.disconnect();
-                                resolve()
-                            }
-                        }).observe(page, { childList: true, subtree: true }) // we want to watch for element additions and style changes
-                    }),
-
-                    // wait for loading icon to disappear
-                    !page.querySelector(".loadingIcon") ? null : new Promise((resolve, reject) => {
-                        new MutationObserver((mutations, observer) => {
-                            mutations.forEach(mutation => mutation.removedNodes.forEach(element => {
-                                if (element.getAttribute("class").includes("loadingIcon")) {
-                                    observer.disconnect()
-                                    resolve()
-                                }
-                            }))
-                        }).observe(page, { childList: true, subtree: true }) // we want to watch for element additions and style changes
-                    })
-                ])
-            }
+                // wait for loading icon to disappear
+                !page.querySelector(".loadingIcon") ? null : getObserver(page,
+                    () => !page.querySelector(".loadingIcon")
+                ),
+            ])
 
             let pageCanvas = page.querySelector(".canvasWrapper > canvas")
             if (!pageCanvas) {
