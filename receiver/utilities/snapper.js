@@ -91,12 +91,12 @@ let saveFile = async (newPage, pathName, resolution) => {
 
         setProgress("Compiling PDF")
         for (let i = 0; i < collection.length; i++) {
+
+            await getWait(10) // allow other shizzle to run
             changeProgress(parseFloat(i / collection.length) * 100)
 
             // to be done, make the dimensions more dynamic by using the width given in their attributes to allow for different widths as well
             // these dimensions may be unimportant though since I swear I've seen landscape pages
-            console.log("added")
-            await getWait(100)
             finalPDF.addImage(collection[i], 'JPEG', 0, 0, 210, 297, '', 'FAST') // (data, format, offset_x, offset_y, width, height, compression) -> width and height are that of a typical A4 sheet
 
             if (i < collection.length - 1) {

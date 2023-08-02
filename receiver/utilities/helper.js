@@ -6,8 +6,8 @@ let setProgress = (message) => {
     enableElement(document.querySelector("#printServiceOverlay"), message != undefined)
     enableElement(document.querySelector("#overlayContainer"), message != undefined)
 
-    enableElement(document.querySelector("#printServiceOverlay").querySelector("buttonRow"), false)
-    enableElement(document.querySelector("#passwordOverlay", false))
+    enableElement(document.querySelector("#printServiceOverlay > .dialog > .buttonRow"), false)
+    enableElement(document.querySelector("#passwordOverlay"), false)
 
     document.querySelector("#printServiceOverlay > .dialog > .row > span").innerHTML = message
 }
