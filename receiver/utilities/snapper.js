@@ -39,8 +39,10 @@ let renderFile = (resolution) =>
             return
         }
 
+        setProgress("Rendering page")
         for (let pageIndex = 0; pageIndex < pageCount; pageIndex++) {
             setPage(pageIndex + 1)
+            changeProgress(parseFloat(pageIndex / pageCount) * 100)
 
             let page = pageContainer[pageIndex]
 
@@ -67,6 +69,7 @@ let renderFile = (resolution) =>
             collection.push(pageCanvas.toDataURL("image/png"))
         }
         console.log("rendering routine finished")
+        setProgress(null)
 
         masterResolve(collection)
         return
@@ -86,15 +89,21 @@ let saveFile = async (newPage, pathName, resolution) => {
             throw "empty document?"
         }
 
+        setProgress("Compiling PDF")
         for (let i = 0; i < collection.length; i++) {
+            changeProgress(parseFloat(i / collection.length) * 100)
+
             // to be done, make the dimensions more dynamic by using the width given in their attributes to allow for different widths as well
             // these dimensions may be unimportant though since I swear I've seen landscape pages
+            console.log("added")
+            await getWait(100)
             finalPDF.addImage(collection[i], 'JPEG', 0, 0, 210, 297, '', 'FAST') // (data, format, offset_x, offset_y, width, height, compression) -> width and height are that of a typical A4 sheet
 
             if (i < collection.length - 1) {
                 await finalPDF.addPage() // so that a blank page isn't added at the end
             }
         }
+        setProgress(null)
 
         if (newPage) {
             window.open(URL.createObjectURL(finalPDF.output("blob")), "_self")

@@ -1,5 +1,23 @@
 let getWait = (d) => new Promise(resolve => setTimeout(resolve, d))
 
+let enableElement = (element, status) => element.setAttribute("class", `${element.getAttribute("class").replaceAll("hidden", "")}${status == true ? "" : " hidden"}`)
+
+let setProgress = (message) => {
+    enableElement(document.querySelector("#printServiceOverlay"), message != undefined)
+    enableElement(document.querySelector("#overlayContainer"), message != undefined)
+
+    enableElement(document.querySelector("#printServiceOverlay").querySelector("buttonRow"), false)
+    enableElement(document.querySelector("#passwordOverlay", false))
+
+    document.querySelector("#printServiceOverlay > .dialog > .row > span").innerHTML = message
+}
+
+let changeProgress = (progress) => {
+    progress = Math.round(progress)
+    document.querySelector("#printServiceOverlay").querySelector("progress").value = progress
+    document.querySelector("#printServiceOverlay").querySelector(".relative-progress").innerHTML = `${progress}%`
+}
+
 let getError = () => {
 
     if (document.querySelector(".page-container")) {
