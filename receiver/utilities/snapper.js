@@ -27,6 +27,7 @@ let renderFile = (resolution) =>
 
         let pgNumber = document.getElementById("pageNumber")
         let pageCount = pgNumber.getAttribute("max")
+        let currentPage = pgNumber.value
 
         let setPage = (n) => {
             pgNumber.value = n
@@ -69,7 +70,9 @@ let renderFile = (resolution) =>
             collection.push(pageCanvas.toDataURL("image/png"))
         }
         console.log("rendering routine finished")
+        
         setProgress(null)
+        setPage(currentPage)
 
         masterResolve(collection)
         return

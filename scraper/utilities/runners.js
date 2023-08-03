@@ -4,6 +4,7 @@ let scrape = async (contents, success, maxConcurrentPages, maxPageCount, resolut
 
     // store states
     let failure = {}
+    currentlyRunning = {}
 
     if (success) {
         console.log("Entries before: ", contents.length)
@@ -19,14 +20,9 @@ let scrape = async (contents, success, maxConcurrentPages, maxPageCount, resolut
         console.log("Entries after: ", contents.length)
     }
 
+    // where does this run? The great Hamdan chasm (look into it, pretty cool how it works)
     let stop = false
-    closerGen(null, async () => { // where does this run? The great Hamdan chasm (look into it, pretty cool how it works)
-        stop = true // I can't just return else errors.txt (if built) won't be downloaded
-        Object.keys(currentlyRunning).forEach(runningTabId => {
-            delete currentlyRunning[runningTabId]
-            chrome.tabs.remove(parseInt(runningTabId), null).catch((e) => null)
-        })
-    })
+    let manualStopper = closerGen(null, async () => stop = true) // I can't just return else errors.txt (if built) won't be downloaded
 
     for (let i = 0; i < contents.length; i++) {
         // if more that the maxTabs are running at once then wait for one to finish before continuing
@@ -37,22 +33,22 @@ let scrape = async (contents, success, maxConcurrentPages, maxPageCount, resolut
         }
 
         if (stop) { break }
+        console.log("making")
 
         let name = contents[i][0]
         let url = contents[i][1]
 
-        let tab = await chrome.tabs.create({ url: url })
-            .catch(e => {
-                console.log("Failed to create tab")
-                failure[name] = `failed to create tab: ${e}`
-            })
+        let id
+        try { id = await createTab(url) }
+        catch (e) {
+            console.log("Failed to create tab", url)
+            failure[name] = `failed to create tab: ${e}`
+        }
 
-        if (!tab) { continue }
-
-        let id = tab.id
+        if (!id) { continue } // it may be that the race is finished
 
         // jesus, javascript is funky - what the hell's the context here?! Even I don't get what I've written!
-        currentlyRunning[tab.id] = new Promise(async (resolve, reject) => {
+        currentlyRunning[id] = new Promise(async (resolve, reject) => {
             try {
                 console.log("waiting for status request from", name, url, id)
 
@@ -100,7 +96,6 @@ let scrape = async (contents, success, maxConcurrentPages, maxPageCount, resolut
                     delete currentlyRunning[id] // finished!
                     reject(error)
                 }
-
                 resolve()
             }
         })
@@ -117,19 +112,16 @@ let scrape = async (contents, success, maxConcurrentPages, maxPageCount, resolut
     console.log("WE FINISHED BOI!")
     await alertBridge("Dundo!")
 
-    chrome.runtime.reload() // much easier this way
+    manualStopper()
+    // chrome.runtime.reload() // much easier this way
 }
 
 let roam = async (contents, maxTabs, min, max, scrollSpeed, scrollStride) => {
+
+    currentlyRunning = {}
+
     let stop = false
-
-    closerGen("Welcome back!", async () => {
-        stop = true
-
-        for (let id of Object.keys(currentlyRunning)) {
-            await chrome.tabs.remove(parseInt(id), null)
-        }
-    })
+    let manualStopper = closerGen("Welcome back!", async () => stop = true)
 
     while (true) {
 
@@ -140,7 +132,9 @@ let roam = async (contents, maxTabs, min, max, scrollSpeed, scrollStride) => {
 
         if (stop) { break }
 
-        let id = (await chrome.tabs.create({ url: contents[getRandom(0, contents.length - 1)][1] })).id
+        let id = await createTab(contents[getRandom(0, contents.length - 1)][1])
+        if (!id) { continue }
+
         currentlyRunning[id] = new Promise(async (resolve, reject) => {
 
             try {
@@ -158,10 +152,11 @@ let roam = async (contents, maxTabs, min, max, scrollSpeed, scrollStride) => {
             catch (error) {
                 console.log(error)
 
-                await chrome.tabs.remove(id, null).catch((e) => null)
                 delete currentlyRunning[id]
                 resolve()
             }
         })
     }
+
+    manualStopper()
 }
