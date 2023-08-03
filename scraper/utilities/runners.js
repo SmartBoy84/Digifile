@@ -33,7 +33,6 @@ let scrape = async (contents, success, maxConcurrentPages, maxPageCount, resolut
         }
 
         if (stop) { break }
-        console.log("making")
 
         let name = contents[i][0]
         let url = contents[i][1]
@@ -102,7 +101,7 @@ let scrape = async (contents, success, maxConcurrentPages, maxPageCount, resolut
     }
 
     console.log("waiting for all downloads to finish")
-    await Promise.allSettled(Object.values(currentlyRunning)).catch() // ignore errors, even if all were rejected
+    await Promise.allSettled(Object.values(currentlyRunning)).catch(e => null) // ignore errors, even if all were rejected
 
     if (Object.keys(failure).length > 0) {
         console.log(failure)

@@ -39,14 +39,14 @@ let windowCloseBlocker = async () => {
     return closed
 }
 
-let createTab = async (url, mainWindow) => {
-    if (await windowCloseBlocker()) {
+let createTab = async (url, anyWindow) => {
+    if (!anyWindow && await windowCloseBlocker()) {
         return null
     }
 
     return (await chrome.tabs.create({
         ...{ url, active: true },
-        ...mainWindow ? {/* any window */ } : { windowId: await getWindow() }
+        ...anyWindow ? {/* any window */ } : { windowId: await getWindow() }
     })).id
 }
 

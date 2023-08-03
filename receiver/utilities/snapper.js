@@ -70,7 +70,7 @@ let renderFile = (resolution) =>
             collection.push(pageCanvas.toDataURL("image/png"))
         }
         console.log("rendering routine finished")
-        
+
         setProgress(null)
         setPage(currentPage)
 
@@ -86,7 +86,8 @@ let saveFile = async (newPage, pathName, resolution) => {
         let collection = await (renderFile(resolution))
 
         // start PDF compilation
-        let finalPDF = new jsPDF()
+        let finalPDF
+        let dummyImg = new Image()
 
         if (collection.length == 0) {
             throw "empty document?"
@@ -98,13 +99,16 @@ let saveFile = async (newPage, pathName, resolution) => {
             await getWait(10) // allow other shizzle to run
             changeProgress(parseFloat(i / collection.length) * 100)
 
-            // to be done, make the dimensions more dynamic by using the width given in their attributes to allow for different widths as well
-            // these dimensions may be unimportant though since I swear I've seen landscape pages
-            finalPDF.addImage(collection[i], 'JPEG', 0, 0, 210, 297, '', 'FAST') // (data, format, offset_x, offset_y, width, height, compression) -> width and height are that of a typical A4 sheet
+            dummyImg.src = collection[i]
+            await dummyImg.decode()
 
-            if (i < collection.length - 1) {
-                await finalPDF.addPage() // so that a blank page isn't added at the end
+            if (i > 0) {
+                finalPDF.addPage([dummyImg.width, dummyImg.height])
+            } else {
+                finalPDF = new jsPDF('p', 'pt', [dummyImg.width, dummyImg.height]); // must initialise here because removal of blank starting page is IMPOSSIBLE with this dumb library
             }
+
+            finalPDF.addImage(dummyImg, 'JPEG', 0, 0, dummyImg.width, dummyImg.height, null, 'FAST') // (data, format, offset_x, offset_y, width, height, compression) -> width and height are that of a typical A4 sheet
         }
         setProgress(null)
 
