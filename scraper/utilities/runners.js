@@ -1,6 +1,6 @@
 let currentlyRunning = {}
 
-let scrape = async (contents, maxConcurrentPages, maxPageCount, resolution) => {
+let scrape = async (contents, maxConcurrentPages, maxPageCount, resolution, heirarchy) => {
 
     // store states
     let failure = {}
@@ -20,7 +20,7 @@ let scrape = async (contents, maxConcurrentPages, maxPageCount, resolution) => {
 
         if (stop) { break }
 
-        let name = contents[i][0]
+        let name = heirarchy ? contents[i][0] : contents[i][0].replace(/.*\//, '') // if user doesn't want to include heirarchy then remove it?
         let url = contents[i][1]
 
         let id

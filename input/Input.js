@@ -5,7 +5,8 @@ let settings = {
     "maxTime": 50, // min
     "scrollSpeed": 5, // seconds
     "scrollStride": 100, // px
-    "resolution": 1.5 // scalar
+    "resolution": 1.5, // scalar
+    "heirarchy": true
 }
 
 // just trying out a new way of doing things
@@ -74,6 +75,10 @@ let interface = {
                 settings[e.target.dataset.type] = parseFloat(999) // zoom greater than about 10 causes the highest possible quality to be used
             }
         }
+    },
+
+    "heirarchy": {
+        eventHandler: (e) => settings["heirarchy"] = e.target.checked
     }
 }
 
@@ -81,8 +86,10 @@ let interface = {
 setUpdater("button", "click")
 setUpdater("fileInput", "input")
 setUpdater("slider", "input")
+setUpdater("checkbox", "click")
 
-document.querySelectorAll(".setting")
+// for text inputs
+document.querySelectorAll(".text_input")
     .forEach(setting => {
         let name = setting.dataset.type
 
