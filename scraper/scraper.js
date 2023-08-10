@@ -42,7 +42,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, reply) => {
             if (selection.length > 0) {
                 console.log("selection", selection)
 
-                request["contents"] = request["contents"].filter(a => selection.some(b => a[0].includes(b)))
+                request["contents"] = request["contents"].filter(a => selection.some(b => a[0].includes(b.replace(/\.[^/.]+$/, "")))) // * remove extension from selection
 
                 if (request["contents"].length == 0) {
                     alertBridge(`Selection made but ${selection} not found in this excel sheet; remove selection, close tab or update excel sheet`)
@@ -53,7 +53,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, reply) => {
             }
 
             if (request["history"]) {
-                console.log("Entries before: ", request["contents"].length)
+                console.log("Entries before: ", request["contents"].length, request["contents"])
 
                 request["contents"] = request["contents"].filter(a => !request["history"].some(b => a[0] == b))
                 if (request["contents"].length == 0) {
@@ -61,7 +61,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, reply) => {
                     return
                 }
 
-                console.log("Entries after: ", request["contents"].length)
+                console.log("Entries after: ", request["contents"].length, request["contents"])
             }
 
             await alertBridge(`About to scrape ${request["contents"].length} files, ready?`)

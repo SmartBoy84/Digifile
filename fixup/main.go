@@ -28,9 +28,7 @@ func main() {
 	}
 
 	for _, pdfFile := range pdfFiles {
-		oldName := filepath.Base(pdfFile)
-		newName := strings.ReplaceAll(oldName, "$$", "/")
-		newPath := filepath.Join(targetPath, newName)
+		newPath := filepath.Join(targetPath, filepath.Base(pdfFile))
 
 		err := os.MkdirAll(filepath.Dir(newPath), os.ModePerm)
 		if err != nil {
@@ -53,11 +51,9 @@ func main() {
 			path = strings.ReplaceAll(path, `\`, "/")
 
 			path = strings.TrimPrefix(path, targetPath)
-			path = strings.TrimPrefix(path, "/")
-			path = "/" + path
+			path = strings.TrimLeft(path, "/")
 
 			path = strings.ReplaceAll(path, "//", "/")
-			path = strings.ReplaceAll(path, "/", "$$")
 
 			allFiles = append(allFiles, path)
 		}

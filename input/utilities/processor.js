@@ -37,6 +37,7 @@ let processExcelFile = (file) =>
                 .map(a => [`${a[5]}/${a[0].trim()}`
                     .replaceAll(/(?<=\/)(\d+\.?)+\s?/g, "") // strip numbers before the name
                     .replace(/^\/+/, '') // remove initial / if present
+                    .replace(/\.[^/.]+$/, ".pdf") // replace file extension at end with .pdf
                     , a[3]])
 
             if (data.length > 0) {

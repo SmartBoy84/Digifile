@@ -74,10 +74,6 @@ window.addEventListener("DOMContentLoaded", async () => {
         }
         else {
             if (!error) { // so far so good?
-                response["name"] = response["name"]
-                    .replaceAll("\/", `$$$$`) // must do this so that fixup utility can work later to recreate file hierarchy (maybe not needed?!)
-                    .replace(/\.[^/.]+$/, ".pdf") // replace file extension at end with .pdf
-
                 console.log(`Downloading file: ${response["name"]} at scalar res: ${response["resolution"]}`)
                 error = await saveFile(false, response["name"], response["resolution"])
             }
