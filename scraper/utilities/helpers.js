@@ -182,4 +182,20 @@ let injectCode = (hook, tabId) => {
         world: 'MAIN',
         injectImmediately: true, // Chrome 102+
     })
-} 
+}
+
+let getDigifyTabs = async () => await chrome.tabs.query({ url: "https://digify.com/*" })
+
+let getSelectedPaths = async () => {
+    let digifyTabs = await getDigifyTabs()
+
+    for (tab of digifyTabs) { // won't error as all digify pages are expected to have this listener (url above matches the one in the manifest)
+        let reply = await chrome.tabs.sendMessage(tab.id, { "type": "selection" })
+
+        if (reply["paths"] && reply["paths"].length > 0) {
+            return reply["paths"]
+        }
+    }
+
+    return []
+}

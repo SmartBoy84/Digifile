@@ -1,24 +1,10 @@
 let currentlyRunning = {}
 
-let scrape = async (contents, success, maxConcurrentPages, maxPageCount, resolution) => {
+let scrape = async (contents, maxConcurrentPages, maxPageCount, resolution) => {
 
     // store states
     let failure = {}
     currentlyRunning = {}
-
-    if (success) {
-        console.log("Entries before: ", contents.length)
-
-        contents = contents.filter(a => !success.some(b => a[0] == b))
-        if (contents.length == 0) {
-            alertBridge("Archive is already up to data - nothing new to scrape!")
-            return
-        } else {
-            await alertBridge(`About to scrape ${contents.length} files, ready?`)
-        }
-
-        console.log("Entries after: ", contents.length)
-    }
 
     // where does this run? The great Hamdan chasm (look into it, pretty cool how it works)
     let stop = false

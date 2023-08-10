@@ -36,12 +36,13 @@ let processExcelFile = (file) =>
 
                 .map(a => [`${a[5]}/${a[0].trim()}`
                     .replaceAll(/(?<=\/)(\d+\.?)+\s?/g, "") // strip numbers before the name
-                    .replaceAll("\/", `$$$$`).replace(/\.[^/.]+$/, ".pdf") // replace '/' with '$$'
+                    .replace(/^\/+/, '') // remove initial / if present
                     , a[3]])
 
             if (data.length > 0) {
                 resolve(data)
             } else {
+                alert("Excel sheet is empty!")
                 reject()
             }
         }

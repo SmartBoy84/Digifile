@@ -31,7 +31,11 @@ It writes a `progress.txt` file (made regardless of file heirarchy has been rege
 
 *I have compiled this for various platforms and put it in releases*
 
-**Note**: *`progress.txt` generation is the same regardless of if `build_heirarchy.mjs` has been run or not*
+**Note**: *`progress.txt` generation is the same regardless of if `fixup` has been run or not*
+
+## Selecting
+Prior to starting the scraper, open a document directory page and select files/folders  
+This selection is filtered out from the excel sheet and will be the only documents that are scraped from the directory litsting (if they are found)
 
 ## Scraping/updating
 1. If continuing/updating and `progress.txt` was deleted/wasn't downloaded by the extension, run the helper utility to create it  

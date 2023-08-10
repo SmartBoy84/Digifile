@@ -84,3 +84,14 @@ let traveller = (scrollStride, scrollSpeed, time) => new Promise(async (resolve,
     }
     resolve()
 })
+
+let getPath = () => Array.from(document.querySelectorAll(".path-name-in-drop-down, .path-name:not(.level_1)")).map(a => a.innerHTML.trim()).join("/")
+
+let getChecked = () => {
+    let path = getPath()
+
+    return Array.from(document.querySelectorAll(".datatable-checkbox"))
+        .reduce((a, b) => b.checked ?
+            [...a, `${path}/${b.closest("datatable-row-wrapper").querySelector(".file-name > a").innerHTML.trim()}`]
+            : a, [])
+}
