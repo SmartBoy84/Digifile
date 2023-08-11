@@ -1,0 +1,39 @@
+<html>
+
+<head>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+
+        iframe {
+            width: 280px;
+            height: 400px;
+        }
+
+        .frame {
+            margin: 10px;
+            width: auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .close {
+            height: 30px;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <button onclick="openWindow('./reporter.html')"></button>
+</body>
+
+<script src="./communicator.js"></script>
+
+</html>

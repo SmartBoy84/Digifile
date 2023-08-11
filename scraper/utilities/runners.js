@@ -1,14 +1,14 @@
 let currentlyRunning = {}
 
 let scrape = async (contents, maxConcurrentPages, maxPageCount, resolution, heirarchy) => {
-
+    console.log("Hey")
     // store states
     let failure = {}
     currentlyRunning = {}
 
     // where does this run? The great Hamdan chasm (look into it, pretty cool how it works)
     let stop = false
-    let manualStopper = closerGen(null, async () => stop = true) // I can't just return else errors.txt (if built) won't be downloaded
+    await getWindow(null, async () => stop = true) // I can't just return else errors.txt (if built) won't be downloaded
 
     for (let i = 0; i < contents.length; i++) {
         // if more that the maxTabs are running at once then wait for one to finish before continuing
@@ -24,7 +24,7 @@ let scrape = async (contents, maxConcurrentPages, maxPageCount, resolution, heir
         let url = contents[i][1]
 
         let id
-        try { id = await createTab(url) }
+        try { id = await createFrame(url) }
         catch (e) {
             console.log("Failed to create tab", url)
             failure[name] = `failed to create tab: ${e}`
@@ -37,7 +37,7 @@ let scrape = async (contents, maxConcurrentPages, maxPageCount, resolution, heir
             try {
                 console.log("waiting for status request from", name, url, id)
 
-                await waitForResponse(id, (request, sender, reply) => {
+                await awaitFrameResponse(id, (request, sender, reply) => {
                     if (request["type"] == "document") {
 
                         reply({ "type": "scraper", "name": name, resolution, maxPageCount })
@@ -48,7 +48,7 @@ let scrape = async (contents, maxConcurrentPages, maxPageCount, resolution, heir
 
                 console.log("and we're off!")
 
-                await waitForResponse(id, (request, sender, reply) => { // store our promise in here but don't wait for it here
+                await awaitFrameResponse(id, (request, sender, reply) => { // store our promise in here but don't wait for it here
 
                     if (request["type"] == "error") { // must listen for reply here to avoid race condition
                         console.log("got reply from", request["name"])
@@ -97,7 +97,7 @@ let scrape = async (contents, maxConcurrentPages, maxPageCount, resolution, heir
     console.log("WE FINISHED BOI!")
     await alertBridge("Dundo!")
 
-    manualStopper()
+    closeWindow()
     // chrome.runtime.reload() // much easier this way
 }
 
@@ -106,7 +106,7 @@ let roam = async (contents, maxTabs, min, max, scrollSpeed, scrollStride) => {
     currentlyRunning = {}
 
     let stop = false
-    let manualStopper = closerGen("Welcome back!", async () => stop = true)
+    await getWindow("Welcome back!", async () => stop = true) // make a window
 
     while (true) {
 
@@ -117,13 +117,13 @@ let roam = async (contents, maxTabs, min, max, scrollSpeed, scrollStride) => {
 
         if (stop) { break }
 
-        let id = await createTab(contents[getRandom(0, contents.length - 1)][1])
+        let id = await createFrame(contents[getRandom(0, contents.length - 1)][1])
         if (!id) { continue }
 
         currentlyRunning[id] = new Promise(async (resolve, reject) => {
 
             try {
-                await waitForResponse(id, (request, sender, reply) => {
+                await awaitFrameResponse(id, (request, sender, reply) => {
                     if (request["type"] == "document") {
 
                         reply({ "type": "traveller", "time": getRandom(min, max) * 60 * 1000, "scrollSpeed": scrollSpeed * 1000, "scrollStride": scrollStride })
@@ -132,7 +132,7 @@ let roam = async (contents, maxTabs, min, max, scrollSpeed, scrollStride) => {
                     return false
                 })
 
-                await waitForResponse(id) // wait for tab to timeout or be closed, throw regardless of status
+                await awaitFrameResponse(id) // wait for tab to timeout or be closed, throw regardless of status
             }
             catch (error) {
                 console.log(error)
@@ -143,5 +143,5 @@ let roam = async (contents, maxTabs, min, max, scrollSpeed, scrollStride) => {
         })
     }
 
-    manualStopper()
+    closeWindow()
 }

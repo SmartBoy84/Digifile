@@ -1,5 +1,5 @@
 try {
-    importScripts('./utilities/helpers.js', './utilities/runners.js');
+    importScripts('./utilities/window.js', './utilities/helpers.js', './utilities/runners.js');
 } catch (e) {
     console.error(e);
 }
@@ -12,6 +12,7 @@ let override = `
     };
 })();
 `
+alertBridge("Hello")
 
 chrome.runtime.onMessage.addListener(async (request, sender, reply) => {
     // "maxPages": 3, // max number of concurrent pages

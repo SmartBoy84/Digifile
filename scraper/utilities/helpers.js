@@ -1,56 +1,49 @@
 let getWait = (d) => new Promise(resolve => setTimeout(resolve, d))
 let getRandom = (low, high) => Math.floor(low + (Math.random() * (high - low)))
 
-let saveData = async (fileName, data) => await openReporter("download", { "name": fileName, "data": data })
-let alertBridge = async (str) => await openReporter("alert", { "alert": str })
+let saveData = async (fileName, data) => await dashboardMessage({ "type": "download", "name": fileName, "data": data })
+let alertBridge = async (str) => await awaitTabResponse(await createTab("./dashboard/alert/alert.html", true), (request, sender, reply) => reply({ "data": str })).catch(e => null)
 
-let myWindow = {}
-let getWindow = async () => {
-    if (!myWindow.id) {
-        myWindow.id = (await chrome.windows.create({
-            focused: true,
-            state: 'maximized'
-        })
-        ).id
+let awaitFrameResponse = (id, cFn) =>
 
-        myWindow.windowPromise = new Promise(resolve => myWindow.windowResolver = () => resolve(null))
-    }
-    return myWindow.id
-}
+    new Promise(async (resolve, reject) => {
+        let monitorPort = await chrome.runtime.connect(null, { "name": id })
 
-let windowCloseBlocker = async () => {
-    let closed = false
+        let frameRemoval = async function (tabId) {
+            if (tabId == id) {
+                monitorPort.onRemoved.removeListener(arguments.callee)
+                console.log("frame closed")
 
-    if (myWindow.id) {
-
-        try {
-            await chrome.windows.get(myWindow.id)
-        } catch (e) {
-            closed = true
+                if (await windowCloseBlocker()) {
+                    resolve() // tab was closed indirectly because of user closing window not the tab itself
+                }
+                else {
+                    reject("frame closed")
+                }
+            }
         }
 
-        // I have to do this because the code tries to make another tab even as the window is being closed
-        if (closed) {
-            console.log("tab waiting for complete window closure")
-            await myWindow.windowPromise // send this back to delay further executation
+        monitorPort.onRemoved.addListener(frameRemoval)
+
+        let messageReceived = function (request, sender, reply) {
+
+            if (sender["id"] && sender["id"] == id) {
+                if (!cFn || (cFn && cFn(request, sender, reply))) { // only stop listening if a callback function is defined and returns true or if it isn't defined
+
+                    console.log("successfully exchanged message")
+
+                    monitorPort.onRemoved.removeListener(tabRemoval)
+                    chrome.runtime.onMessage.removeListener(arguments.callee)
+
+                    resolve(request)
+                }
+            }
         }
-    }
 
-    return closed
-}
+        chrome.runtime.onMessage.addListener(messageReceived)
+    })
 
-let createTab = async (url, anyWindow) => {
-    if (!anyWindow && await windowCloseBlocker()) {
-        return null
-    }
-
-    return (await chrome.tabs.create({
-        ...{ url, active: true },
-        ...anyWindow ? {/* any window */ } : { windowId: await getWindow() }
-    })).id
-}
-
-let waitForResponse = (id, cFn) =>
+let awaitTabResponse = (id, cFn) =>
     new Promise(async (resolve, reject) => {
 
         let tabRemoval = async function (tabId) {
@@ -93,77 +86,6 @@ let waitForResponse = (id, cFn) =>
 
         chrome.runtime.onMessage.addListener(messageReceived)
     })
-
-let closerGen = (message, cFn) => {
-    let listeners = [
-        chrome.runtime.onMessage.addListener(async request => {
-            if (request["type"] == "stop") {
-                console.log("Close command received")
-                await stop()
-            }
-        }),
-        chrome.windows.onRemoved.addListener(async removedID => {
-            console.log("Window closed")
-
-            if (removedID == myWindow.id) {
-                windowId = null
-                await stop()
-            }
-        })]
-
-    let stop = async () => {
-        console.log("stopping...")
-
-        // first and foremost - stop the runners ASAP
-        await cFn()
-
-        // next stop the listeners so we can close whatever without them firing
-        listeners.forEach(listener => {
-            chrome.runtime.onMessage.removeListener(listener)
-            chrome.windows.onRemoved.removeListener(listener)
-        })
-
-        // delete from currently running array to prevent uncessary pollution of error after next step
-        // no risk of new tabs opening due to my silly little trick above in createTab()
-        Object.keys(currentlyRunning).forEach(runningTabId => delete currentlyRunning[runningTabId])
-
-        // now close the window if it's still open
-        if (myWindow.id) {
-            chrome.windows.remove(myWindow.id) // this should also stop all running racers
-            myWindow.id = null
-        }
-        myWindow.windowResolver()
-
-        if (message) {
-            alertBridge(message)
-        }
-    }
-
-    return stop
-}
-
-let openReporter = async (type, data) => {
-    try {
-        let id = await createTab(chrome.runtime.getURL("reporter/reporter.html"), true)
-
-        await waitForResponse(id, (request, sender, reply) => {
-
-            if (request["type"] == "reporter") {
-                console.log("sending data to reporter page...")
-
-                reply({ "type": type, ...data })
-                return true
-            }
-            return false
-        })
-
-        await waitForResponse(id, request => request["type"] == "reporter") // wait for tab to finish
-        await chrome.tabs.remove(id, null)
-
-    } catch (error) {
-        console.log(error)
-    }
-}
 
 let injectCode = (hook, tabId) => {
     console.log("Injecting code!")
