@@ -6,7 +6,8 @@ let settings = {
     "scrollSpeed": 5, // seconds
     "scrollStride": 100, // px
     "resolution": 1.5, // scalar
-    "heirarchy": true
+    "heirarchy": true,
+    "separator": "(&&)_(&)" // '/' not allowed in file name
 }
 
 // just trying out a new way of doing things

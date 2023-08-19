@@ -18,7 +18,6 @@ func main() {
 	} else {
 		targetPath = os.Args[1]
 		targetPath = strings.ReplaceAll(targetPath, `\`, "/")
-	
 	}
 	fmt.Printf("Processing %s", targetPath)
 
@@ -28,7 +27,9 @@ func main() {
 	}
 
 	for _, pdfFile := range pdfFiles {
-		newPath := filepath.Join(targetPath, filepath.Base(pdfFile))
+		actual_path := strings.ReplaceAll(pdfFile, `(&&)_(&)`, "/")
+
+		newPath := filepath.Join(targetPath, actual_path)
 
 		err := os.MkdirAll(filepath.Dir(newPath), os.ModePerm)
 		if err != nil {
@@ -47,7 +48,6 @@ func main() {
 			return err
 		}
 		if !info.IsDir() && strings.ToLower(filepath.Ext(path)) == ".pdf" {
-
 			path = strings.ReplaceAll(path, `\`, "/")
 
 			path = strings.TrimPrefix(path, targetPath)

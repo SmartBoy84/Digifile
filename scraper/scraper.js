@@ -32,7 +32,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, reply) => {
 
         if (request["type"] == "roam") {
             console.log(request)
-            roam(request["contents"], request["maxConcurrentPages"], request["minTime"], request["maxTime"], request["scrollSpeed"], request["scrollStride"], request["heirarchy"])
+            roam(request["contents"], request["maxConcurrentPages"], request["minTime"], request["maxTime"], request["scrollSpeed"], request["scrollStride"])
         }
 
         if (request["type"] == "contents") {
@@ -63,6 +63,15 @@ chrome.runtime.onMessage.addListener(async (request, sender, reply) => {
 
                 console.log("Entries after: ", request["contents"].length, request["contents"])
             }
+
+            request["contents"] = request["contents"].map(a => [
+
+                request["heirarchy"] == false ?
+                    a[0].replace(/.*\//, '') // user disabled heirarchy, remove the '/' with separator
+
+                    : a[0].replace(/\//g, request["separator"]) // heirarchy not disabled, replace '/' with separator
+                , a[1]
+            ])
 
             await alertBridge(`About to scrape ${request["contents"].length} files, ready?`)
             scrape(request["contents"], request["maxConcurrentPages"], request["maxPageCount"], request["resolution"])
