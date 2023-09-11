@@ -190,10 +190,15 @@ let getSelectedPaths = async () => {
     let digifyTabs = await getDigifyTabs()
 
     for (tab of digifyTabs) { // won't error as all digify pages are expected to have this listener (url above matches the one in the manifest)
-        let reply = await chrome.tabs.sendMessage(tab.id, { "type": "selection" })
+        try {
+            let reply = await chrome.tabs.sendMessage(tab.id, { "type": "selection" })
 
-        if (reply["paths"] && reply["paths"].length > 0) {
-            return reply["paths"]
+            if (reply["paths"] && reply["paths"].length > 0) {
+                return reply["paths"]
+            }
+        }
+        catch (error) {
+            throw `Error communicating with main page, try reloading any digify pages that were open prior to loading the extenstion: \n\n${String(error)}`
         }
     }
 

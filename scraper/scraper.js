@@ -79,5 +79,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, reply) => {
     } catch (error) {
         console.log(error)
         await alertBridge(String(error))
+
+        chrome.runtime.reload() // much easier this way
     }
 })

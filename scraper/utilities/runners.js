@@ -98,7 +98,6 @@ let scrape = async (contents, maxConcurrentPages, maxPageCount, resolution) => {
     await alertBridge("Dundo!")
 
     manualStopper()
-    // chrome.runtime.reload() // much easier this way
 }
 
 let roam = async (contents, maxTabs, min, max, scrollSpeed, scrollStride) => {
