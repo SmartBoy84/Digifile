@@ -22,7 +22,8 @@
 				"receiver/Receiver.js",
 				"receiver/utilities/helper.js",
 				"receiver/utilities/snapper.js",
-				"receiver/utilities/jspdf.min.js"
+				"receiver/libs/pdfkit.standalone.js",
+				"receiver/libs/blob-stream.js"
 			],
 			"run_at": "document_start"
 		}

@@ -85,39 +85,49 @@ let saveFile = async (newPage, pathName, resolution) => {
         // render file
         let collection = await (renderFile(resolution))
 
-        // start PDF compilation
-        let finalPDF
-        let dummyImg = new Image()
-
         if (collection.length == 0) {
             throw "empty document?"
         }
 
+        // start PDF compilation
         setProgress("Compiling PDF")
+
+        let dummyImg = new Image()
+        let doc = new PDFDocument({ autoFirstPage: false });
+        let stream = doc.pipe(blobStream());
+
         for (let i = 0; i < collection.length; i++) {
 
             await getWait(10) // allow other shizzle to run
             changeProgress(parseFloat(i / collection.length) * 100)
 
             dummyImg.src = collection[i]
+
             await dummyImg.decode()
 
-            if (i > 0) {
-                finalPDF.addPage([dummyImg.width, dummyImg.height])
-            } else {
-                finalPDF = new jsPDF('p', 'pt', [dummyImg.width, dummyImg.height]); // must initialise here because removal of blank starting page is IMPOSSIBLE with this dumb library
-            }
-
-            finalPDF.addImage(dummyImg, 'JPEG', 0, 0, dummyImg.width, dummyImg.height, null, 'FAST') // (data, format, offset_x, offset_y, width, height, compression) -> width and height are that of a typical A4 sheet
+            doc.addPage({ size: [dummyImg.width, dummyImg.height] });
+            doc.image(dummyImg.src, 0, 0, { width: dummyImg.width, height: dummyImg.height });
         }
+
+        setProgress("Packing the pdf...")
+        changeProgress(100)
+
+        doc.end();
+
+        stream.on('finish', function () {
+            let blob = stream.toBlob('application/pdf');
+            if (newPage) {
+                window.open(URL.createObjectURL(blob), "_blank");
+            } else {
+                let link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = pathName;
+                link.click();
+            }
+        });
+
         setProgress(null)
 
-        if (newPage) {
-            window.open(URL.createObjectURL(finalPDF.output("blob")), "_self")
-        }
-        else {
-            finalPDF.save(pathName)
-        }
     } catch (error) {
         console.log(`Error saving file: ${error}`)
         return error

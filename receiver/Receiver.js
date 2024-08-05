@@ -97,17 +97,9 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     // enable download buttons
     let fileName = document.querySelector(".viewer-file-name").innerHTML.replace(/\.[^/.]+$/, ".pdf")
+    console.log(`File: ${fileName}`)
 
-    let buttons = document.querySelectorAll(".toolbarButton")
-    buttons.forEach(ele => {
-        switch (ele.getAttribute("tabindex")) {
-            case "22":
-                enableButton(ele, () => saveFile(true, fileName, 0))
-                break;
+    addButton("Print", () => saveFile(true, fileName, 0))
+    addButton("Download", () => saveFile(false, fileName, 0))
 
-            case "23":
-                enableButton(ele, () => saveFile(false, fileName, 0))
-                break;
-        }
-    })
 })

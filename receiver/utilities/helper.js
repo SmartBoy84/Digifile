@@ -47,14 +47,15 @@ function urlContentToDataUri(url) {
         }));
 }
 
-let enableButton = (ele, cFn) => {
+let addButton = (name, cFn) => {
 
-    let clone = ele.cloneNode(true)
+    let button = document.createElement("button")
+    button.innerHTML = name
+    button.addEventListener("click", () => cFn())
+    button.style.cssText = "background-color: #f0f0f0; color: #000; border: 1px solid #ccc; padding: 2px 6px; font-size: 14px; cursor: pointer; margin: 3px 5px; border-radius: 3px;"
 
-    clone.removeAttribute("disabled")
-    clone.addEventListener("click", () => cFn())
-
-    ele.parentNode.replaceChild(clone, ele)
+    let container = document.querySelector(".dgf-toolbarViewerRight") // subject to breakage due to page updates
+    container.prepend(button)
 }
 
 let sendMessage = (data) => window.postMessage(data, "*");
